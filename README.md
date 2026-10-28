@@ -263,6 +263,19 @@ asyncio.run(main())
 `engines[]`（`path` / `name` / `folder` / `size_bytes` / `preferred`）。
 本机实测首选 `C:\4nec2\exe\nec2dxs11k.exe`。
 
+**四族引擎实测对比**（`C:\4nec2\NEC引擎\`，均为 NEC-2 双精度、同一协议、结果逐位一致）：
+
+| 族 | 来源 | 1010 段 | 3000 段 | 说明 |
+| --- | --- | --- | --- | --- |
+| **NEC2/MP 多线程**（2012，4.8 MB） | NEC2/MP v1.50 | **0.20 s** | **1.4 s** | 矩阵填充/求解多线程，最快 |
+| NEC2LP64（2023，21.6 MB） | jelanier@chemroc.com | 0.35 s | 3.4 s | 64 位 + LAPACK，官方称 FACTOR 快 6× |
+| NEC2LP32（2020，13.9 MB） | 同上 | 0.53 s | 6.1 s | 32 位 + LAPACK |
+| 原版 NEC2DXS（2009，335 KB） | 4NEC2 自带 Build 2.7 | 0.97 s | 21.0 s | 单线程基准 |
+
+`exe\nec2dxs11k.exe` 经 MD5 核对**就是 NEC2/MP 多线程版**，所以默认首选已是最快引擎；
+LP64 是最佳备选（64 位地址空间、LAPACK 数值库）。后缀 500/1k5/3k0/5k0/8k0/11k 是最大段数上限；
+`exe\nec2d*.exe` 是老引擎，不接受 stdin 两行文件名协议，不能独立使用（需配合 Somnec2d.exe 处理地面）。
+
 ### 5.2 `nec_list_models(directory=None, pattern="*.nec", limit=200)`
 
 `directory` 缺省先扫 `C:\4nec2\models`，再扫 `C:\4nec2\necfile`。返回 `status`、`count`、
