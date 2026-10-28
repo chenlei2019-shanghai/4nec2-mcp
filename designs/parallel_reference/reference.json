@@ -1,0 +1,284 @@
+{
+  "design": {
+    "name": "parallel_reference_tuned",
+    "boom_length_m": 3.6,
+    "radius_m": 0.01,
+    "bands": {
+      "10m": {
+        "freq_center_mhz": 28.5,
+        "elements": [
+          {
+            "name": "10R",
+            "role": "reflector",
+            "length_m": 6.4145,
+            "z_m": 1.0,
+            "segments": 22
+          },
+          {
+            "name": "10D",
+            "role": "driven",
+            "length_m": 4.5176,
+            "z_m": 2.4,
+            "segments": 21
+          },
+          {
+            "name": "10Dir",
+            "role": "director",
+            "length_m": 4.4037,
+            "z_m": 3.6,
+            "segments": 19
+          }
+        ]
+      },
+      "15m": {
+        "freq_center_mhz": 21.2,
+        "elements": [
+          {
+            "name": "15R",
+            "role": "reflector",
+            "length_m": 9.3874,
+            "z_m": 1.6,
+            "segments": 30
+          },
+          {
+            "name": "15D",
+            "role": "driven",
+            "length_m": 6.3988,
+            "z_m": 3.3,
+            "segments": 28
+          }
+        ]
+      },
+      "20m": {
+        "freq_center_mhz": 14.15,
+        "elements": [
+          {
+            "name": "20R",
+            "role": "reflector",
+            "length_m": 7.9722,
+            "z_m": 0.0,
+            "segments": 45
+          },
+          {
+            "name": "20D",
+            "role": "driven",
+            "length_m": 11.1038,
+            "z_m": 2.9,
+            "segments": 42
+          }
+        ]
+      }
+    }
+  },
+  "bands": {
+    "10m": {
+      "separate": {
+        "worst_swr": 26.709,
+        "best_swr": 7.24,
+        "center": {
+          "freq_mhz": 28.425,
+          "swr": 19.557,
+          "z": [
+            9.04,
+            -79.25
+          ],
+          "gain_max_db": 4.37,
+          "fb_db": 5.4,
+          "efficiency_percent": 99.21
+        }
+      },
+      "parallel": {
+        "worst_swr": 1.893,
+        "best_swr": 1.349,
+        "center": {
+          "freq_mhz": 28.425,
+          "swr": 1.71,
+          "z": [
+            55.92,
+            28.11
+          ],
+          "gain_max_db": 7.86,
+          "fb_db": 10.9,
+          "efficiency_percent": 99.6
+        }
+      }
+    },
+    "15m": {
+      "separate": {
+        "worst_swr": 5.032,
+        "best_swr": 3.309,
+        "center": {
+          "freq_mhz": 21.225,
+          "swr": 4.032,
+          "z": [
+            23.13,
+            -43.76
+          ],
+          "gain_max_db": 3.7,
+          "fb_db": 5.0,
+          "efficiency_percent": 99.55
+        }
+      },
+      "parallel": {
+        "worst_swr": 1.894,
+        "best_swr": 1.54,
+        "center": {
+          "freq_mhz": 21.225,
+          "swr": 1.693,
+          "z": [
+            55.1,
+            27.47
+          ],
+          "gain_max_db": 5.62,
+          "fb_db": 4.3,
+          "efficiency_percent": 99.36
+        }
+      }
+    },
+    "20m": {
+      "separate": {
+        "worst_swr": 2.397,
+        "best_swr": 1.835,
+        "center": {
+          "freq_mhz": 14.131,
+          "swr": 2.01,
+          "z": [
+            68.46,
+            37.36
+          ],
+          "gain_max_db": 4.65,
+          "fb_db": 6.6,
+          "efficiency_percent": 99.76
+        }
+      },
+      "parallel": {
+        "worst_swr": 1.871,
+        "best_swr": 1.473,
+        "center": {
+          "freq_mhz": 14.131,
+          "swr": 1.592,
+          "z": [
+            45.4,
+            21.86
+          ],
+          "gain_max_db": 7.38,
+          "fb_db": 6.8,
+          "efficiency_percent": 99.51
+        }
+      }
+    }
+  },
+  "tuned_lengths": {
+    "20R": 7.9722,
+    "10R": 6.4145,
+    "15R": 9.3874,
+    "10D": 4.5176,
+    "20D": 11.1038,
+    "15D": 6.3988,
+    "10Dir": 4.4037
+  },
+  "tuned_positions": {
+    "20R": 0.0,
+    "10R": 1.0,
+    "15R": 1.6,
+    "10D": 2.4,
+    "20D": 2.9,
+    "15D": 3.3,
+    "10Dir": 3.6
+  },
+  "paths": {
+    "10m": "C:\\4nec2-mcp-server\\designs\\parallel_reference\\parallel_reference_tuned_10m.nec",
+    "15m": "C:\\4nec2-mcp-server\\designs\\parallel_reference\\parallel_reference_tuned_15m.nec",
+    "20m": "C:\\4nec2-mcp-server\\designs\\parallel_reference\\parallel_reference_tuned_20m.nec",
+    "parallel": "C:\\4nec2-mcp-server\\designs\\parallel_reference\\parallel_reference_tuned_parallel.nec"
+  },
+  "geometry": {
+    "path": "C:\\4nec2-mcp-server\\designs\\parallel_reference\\geometry.png",
+    "size_bytes": 150905,
+    "elements": 7,
+    "boom_length_m": 3.6,
+    "bands": [
+      "20m",
+      "10m",
+      "15m"
+    ],
+    "dpi": 140,
+    "table": {
+      "rows": 7,
+      "columns": [
+        "元件",
+        "波段",
+        "角色",
+        "长度 (m)",
+        "长度 (λ)",
+        "z (m)",
+        "段数"
+      ]
+    }
+  },
+  "table": [
+    {
+      "name": "20R",
+      "band": "20m",
+      "role": "reflector",
+      "length_m": 11.2,
+      "side_m": 5.6,
+      "z_m": 0.0,
+      "length_lambda": 0.528
+    },
+    {
+      "name": "10R",
+      "band": "10m",
+      "role": "reflector",
+      "length_m": 5.48,
+      "side_m": 2.74,
+      "z_m": 0.7,
+      "length_lambda": 0.521
+    },
+    {
+      "name": "15R",
+      "band": "15m",
+      "role": "reflector",
+      "length_m": 7.5,
+      "side_m": 3.75,
+      "z_m": 1.4,
+      "length_lambda": 0.53
+    },
+    {
+      "name": "10D",
+      "band": "10m",
+      "role": "driven",
+      "length_m": 5.2,
+      "side_m": 2.6,
+      "z_m": 2.4,
+      "length_lambda": 0.494
+    },
+    {
+      "name": "20D",
+      "band": "20m",
+      "role": "driven",
+      "length_m": 10.4,
+      "side_m": 5.2,
+      "z_m": 2.9,
+      "length_lambda": 0.491
+    },
+    {
+      "name": "15D",
+      "band": "15m",
+      "role": "driven",
+      "length_m": 7.0,
+      "side_m": 3.5,
+      "z_m": 3.3,
+      "length_lambda": 0.495
+    },
+    {
+      "name": "10Dir",
+      "band": "10m",
+      "role": "director",
+      "length_m": 4.86,
+      "side_m": 2.43,
+      "z_m": 4.0,
+      "length_lambda": 0.462
+    }
+  ]
+}

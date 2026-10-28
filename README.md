@@ -26,6 +26,20 @@
 → 完整成果页 [docs/showcase-triband.md](docs/showcase-triband.md) ·
 工程细节 [designs/triband_10_15_20](designs/triband_10_15_20/README.md)
 
+### 🆕 同一套工具的第二种馈电拓扑：三个激励振子并联到一个巴伦
+
+上面那套是「三路独立馈电 + 天线开关」。如果想按常见的「三个驱动单元直接并联、单巴伦 50 Ω」来做，
+本项目也把这种拓扑建了模（`Design.parallel_deck()`）并按该拓扑重新调优过，**三个波段全段 SWR < 1.9**：
+
+| 波段 | SWR 范围 | 中心增益 | 前后比 |
+| --- | --- | --- | --- |
+| 10 m（28.0–29.7） | 1.35–1.89 | 7.86 dBi | 10.5–12.0 dB |
+| 15 m（21.0–21.45） | 1.54–1.89 | 5.62 dBi | 2.2–5.6 dB |
+| 20 m（14.0–14.35） | 1.47–1.87 | 7.44 dBi | 6.1–8.2 dB |
+
+尺寸表、母线做法（两条母线 + 6 根连线 + 单点 `EX`）、复算与复现命令：
+[designs/parallel_reference](designs/parallel_reference/README.md)。
+
 ---
 
 ## 典型输出（`nec_plot_pattern` / `nec_plot_sweep` 直接返回 PNG 路径）
@@ -78,6 +92,8 @@ C:\4nec2-mcp-server
 │  └─ images\                # README / 展示页引用的示例图
 ├─ dsh\cordis.mcp-nec2.yml   # 可直接插入的 DSH 配置条目（参考副本）
 ├─ designs\                  # 示例天线工程（含 NEC deck、几何图、仿真结果）
+│  ├─ triband_10_15_20\      # 三路独立馈电 + 开关的三波段八木
+│  └─ parallel_reference\    # 三驱动并联到单巴伦的三波段八木
 ├─ tests\                    # pytest 用例与夹具（.nec / .out）
 ├─ plots\                    # nec_plot_* 默认输出目录（生成物，已 gitignore）
 ├─ pytest.ini                # engine / server 集成测试标记
