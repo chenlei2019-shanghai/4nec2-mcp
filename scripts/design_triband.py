@@ -138,6 +138,115 @@ class Design:
         lines.append("EN")
         return "\n".join(lines) + "\n"
 
+    # -- parallel feed ----------------------------------------------------
+    def parallel_deck(
+        self,
+        *,
+        freq_mhz: float | None = None,
+        sphere: bool = False,
+        bus_x: float = 0.060,
+        bus_y: float = 0.050,
+        gap_m: float = 0.020,
+        feed_z: float | None = None,
+        extra_cards: list[str] | None = None,
+    ) -> str:
+        """Return one deck with **all driven elements wired in parallel** to a balun.
+
+        Real "direct feed" multi-band Yagis solder every driven element across
+        the same balanced feed line, which then goes through one 1:1 balun to
+        the coax.  Electrically that is one source, not three: the band being
+        used still has to work with the other bands' driven elements connected
+        in parallel across the feed point (they load it out of band).
+
+        Geometry used here (documented so the numbers can be reproduced):
+
+        * every driven element is split at its centre with a ``gap_m`` gap;
+        * two bus wires run along the boom at ``x = bus_x``, ``y = ±bus_y``,
+          joining the arms of all driven elements (6 short link wires);
+        * a bridge segment across the two buses at ``feed_z`` carries the
+          single ``EX`` source (that bridge is where the balun/coax sits).
+
+        This deck is band independent: the same structure is swept over the
+        10 m, 15 m and 20 m ranges.
+        """
+        lines = [f"CM {self.comment} (parallel-fed drivers, single balun)"]
+        for element in self.sorted_elements():
+            lines.append(
+                f"CM {element.name:>6s} {element.band:>4s} {element.role:<9s} "
+                f"L={element.length:7.4f}m z={element.z:6.3f}m"
+            )
+        lines.append("CE")
+
+        driven = [element for element in self.sorted_elements() if element.driven]
+        if not driven:
+            raise ValueError("design has no driven elements")
+        if feed_z is None:
+            feed_z = driven[len(driven) // 2].z
+        driven_zs = sorted(element.z for element in driven)
+
+        tag = 0
+        cards: list[str] = []
+        junction_tags: dict[tuple[float, float], int] = {}
+
+        def add_wire(segments: int, start: tuple[float, float, float],
+                     end: tuple[float, float, float]) -> int:
+            nonlocal tag
+            tag += 1
+            cards.append(
+                f"GW {tag} {max(3, int(segments))} "
+                f"{start[0]:.5f} {start[1]:.5f} {start[2]:.5f} "
+                f"{end[0]:.5f} {end[1]:.5f} {end[2]:.5f} {self.radius:.4f}"
+            )
+            return tag
+
+        # elements: plain wires, drivers split into two arms with a centre gap
+        for element in self.sorted_elements():
+            half = element.length / 2.0
+            if element.driven:
+                arm = max(3, round(element.segments * (half - gap_m / 2.0) / element.length))
+                add_wire(arm, (0.0, -half, element.z), (0.0, -gap_m / 2.0, element.z))
+                add_wire(arm, (0.0, gap_m / 2.0, element.z), (0.0, half, element.z))
+            else:
+                add_wire(element.segments, (0.0, -half, element.z), (0.0, half, element.z))
+
+        # two bus wires running along the boom, split at every driven element
+        for sign, bus_label in ((1.0, "upper"), (-1.0, "lower")):
+            for start_z, stop_z in zip(driven_zs, driven_zs[1:]):
+                add_wire(17 if (stop_z - start_z) > 0.5 else 5,
+                         (bus_x, sign * bus_y, start_z), (bus_x, sign * bus_y, stop_z))
+            del bus_label
+
+        # link each arm's inner end to its bus wire
+        for element in driven:
+            for sign in (1.0, -1.0):
+                add_wire(1, (0.0, sign * gap_m / 2.0, element.z),
+                         (bus_x, sign * bus_y, element.z))
+
+        # source bridge: this is the balun/coax point, one EX card below
+        bridge_tag = add_wire(1, (bus_x, bus_y, feed_z), (bus_x, -bus_y, feed_z))
+
+        lines.extend(cards)
+        lines.append("GE 0")
+        lines.append("EK")
+        lines.append(f"GN {-1 if self.ground == 'free' else 1}")
+        lines.append(f"LD 5 0 0 0 {self.conductivity:.4E}")
+        lines.append(f"EX 0 {bridge_tag} 1 0 1 0 0")
+
+        if freq_mhz is None:
+            lines.append(f"FR 0 0 0 0 {BANDS['10m']['center']:.4f} 0")
+        else:
+            lines.append(f"FR 0 0 0 0 {freq_mhz:.4f} 0")
+
+        if sphere:
+            lines.append("RP 0 37 73 1000 0 0 5 5")
+        else:
+            lines.append("RP 0 19 37 1000 0 0 10 10")
+
+        if extra_cards:
+            lines.extend(extra_cards)
+        lines.append("EN")
+        return "\n".join(lines) + "\n"
+
     # -- descriptions -----------------------------------------------------
     def describe(self) -> dict:
         return {
@@ -195,8 +304,18 @@ def initial_design() -> Design:
 # ---------------------------------------------------------------------------
 # evaluation
 # ---------------------------------------------------------------------------
-def evaluate(engine: NecEngine, design: Design, band: str, freq_mhz: float | None = None) -> dict:
-    deck = design.deck(band, freq_mhz=freq_mhz)
+def evaluate(
+    engine: NecEngine,
+    design: Design,
+    band: str,
+    freq_mhz: float | None = None,
+    *,
+    feed: str = "separate",
+) -> dict:
+    if feed == "parallel":
+        deck = design.parallel_deck(freq_mhz=freq_mhz)
+    else:
+        deck = design.deck(band, freq_mhz=freq_mhz)
     result = engine.run(deck)
     if not result.ok:
         return {"status": "error", "error": "; ".join(result.errors) or "engine failed",
@@ -211,19 +330,26 @@ def evaluate(engine: NecEngine, design: Design, band: str, freq_mhz: float | Non
     return summary
 
 
-def band_sweep(engine: NecEngine, design: Design, band: str, points: int = 11) -> list[dict]:
+def band_sweep(
+    engine: NecEngine,
+    design: Design,
+    band: str,
+    points: int = 11,
+    *,
+    feed: str = "separate",
+) -> list[dict]:
     info = BANDS[band]
     freqs = [info["low"] + (info["high"] - info["low"]) * i / (points - 1) for i in range(points)]
     rows = []
     for freq in freqs:
-        row = evaluate(engine, design, band, freq_mhz=freq)
+        row = evaluate(engine, design, band, freq_mhz=freq, feed=feed)
         rows.append(row)
     return rows
 
 
-def best_swr_point(engine: NecEngine, design: Design, band: str) -> tuple[float, float]:
+def best_swr_point(engine: NecEngine, design: Design, band: str, *, feed: str = "separate") -> tuple[float, float]:
     """Frequency of the SWR minimum inside the band and its value."""
-    rows = band_sweep(engine, design, band, points=9)
+    rows = band_sweep(engine, design, band, points=9, feed=feed)
     ok = [row for row in rows if row.get("status") == "ok"]
     if not ok:
         return (float("nan"), float("nan"))
@@ -231,8 +357,8 @@ def best_swr_point(engine: NecEngine, design: Design, band: str) -> tuple[float,
     return (best["freq_mhz"], best["swr"])
 
 
-def score(engine: NecEngine, design: Design, band: str) -> dict:
-    rows = band_sweep(engine, design, band, points=9)
+def score(engine: NecEngine, design: Design, band: str, *, feed: str = "separate") -> dict:
+    rows = band_sweep(engine, design, band, points=9, feed=feed)
     ok = [row for row in rows if row.get("status") == "ok"]
     if len(ok) != len(rows):
         return {"score": 1e9, "reason": "engine error"}
@@ -313,6 +439,10 @@ def write_decks(design: Design, out_dir: Path) -> dict[str, str]:
         target = out_dir / f"{design.name}_{band}.nec"
         target.write_text(design.deck(band, sphere=True), encoding="ascii")
         paths[band] = str(target)
+
+    parallel = out_dir / f"{design.name}_parallel.nec"
+    parallel.write_text(design.parallel_deck(freq_mhz=BANDS["15m"]["center"], sphere=True), encoding="ascii")
+    paths["parallel"] = str(parallel)
     return paths
 
 
@@ -341,10 +471,10 @@ def draw_geometry(design: Design, out_path: Path) -> dict:
     )
 
 
-def band_report(engine: NecEngine, design: Design) -> dict:
-    report: dict = {"design": design.describe(), "bands": {}}
+def band_report(engine: NecEngine, design: Design, *, feed: str = "separate") -> dict:
+    report: dict = {"design": design.describe(), "feed": feed, "bands": {}}
     for band in BANDS:
-        sweep = band_sweep(engine, design, band, points=11)
+        sweep = band_sweep(engine, design, band, points=11, feed=feed)
         rows = [row for row in sweep if row.get("status") == "ok"]
         if not rows:
             report["bands"][band] = {"status": "error"}
@@ -386,6 +516,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default=str(PROJECT / "designs" / "triband_10_15_20"))
     parser.add_argument("--optimize", action="store_true", help="search element lengths")
     parser.add_argument("--report", action="store_true", help="print the design report")
+    parser.add_argument(
+        "--feed",
+        choices=("separate", "parallel", "both"),
+        default="separate",
+        help="separate = one driven element at a time (switched feeds); "
+             "parallel = all driven elements wired to one balun",
+    )
     args = parser.parse_args(argv)
 
     nec_dir = find_nec4nec_dir(args.nec2_dir)
@@ -402,14 +539,19 @@ def main(argv: list[str] | None = None) -> int:
                   flush=True)
 
     report = band_report(engine, design)
+    extra: dict = {}
+    if args.feed in ("parallel", "both"):
+        print("[feed] modelling all driven elements in parallel to one balun", flush=True)
+        extra["parallel_feed"] = band_report(engine, design, feed="parallel")
     paths = write_decks(design, out_dir)
     geometry: dict | None = None
     try:
         geometry = draw_geometry(design, out_dir / "geometry.png")
     except Exception as exc:  # matplotlib is optional
         print(f"[geometry] skipped: {type(exc).__name__}: {exc}", flush=True)
+    payload = {"paths": paths, "geometry": geometry, **extra, **report}
     (out_dir / "design.json").write_text(
-        json.dumps({"paths": paths, "geometry": geometry, **report}, ensure_ascii=False, indent=2),
+        json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     (out_dir / "design_summary.txt").write_text(
@@ -422,6 +564,15 @@ def main(argv: list[str] | None = None) -> int:
               f"gain={center['gain_max_db']:.2f} dBi  fb={center['fb_db']}  "
               f"eff={center['efficiency_percent']:.2f}%  "
               f"edges swr={data['edges']}", flush=True)
+    if "parallel_feed" in extra:
+        print("[feed] parallel-to-one-balun results (same element lengths):", flush=True)
+        for band, data in extra["parallel_feed"]["bands"].items():
+            if data.get("status") == "error":
+                print(f"  {band}: engine error", flush=True)
+                continue
+            center = data["center"]
+            print(f"  {band}: f={center['freq_mhz']:.2f} MHz  swr={center['swr']:.3f}  "
+                  f"gain={center['gain_max_db']:.2f} dBi  edges swr={data['edges']}", flush=True)
     print("decks:", json.dumps(paths, ensure_ascii=False))
     return 0
 

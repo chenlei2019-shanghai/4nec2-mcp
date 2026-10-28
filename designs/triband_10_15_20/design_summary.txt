@@ -70,6 +70,7 @@
       }
     }
   },
+  "feed": "separate",
   "bands": {
     "10m": {
       "center": {
