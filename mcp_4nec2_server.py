@@ -201,7 +201,10 @@ def build_server(nec4nec_dir: str | None = None, host: str = "127.0.0.1", port: 
             "tube diameter (uniform or tapered sections), and for MULTI-BAND antennas "
             "the feed topology — separate feedlines per band, all driven elements "
             "hardwired in parallel to one balun, open-sleeve, or trapped — plus power "
-            "rating. The feed topology changes the design fundamentally."
+            "rating. The feed topology changes the design fundamentally. "
+            "A model catalog of proven designs (docs/模型目录.md, G0KSC library at "
+            r"C:\4nec2\G0KSC\models\antennas plus the 4NEC2 examples) is available: "
+            "reuse a close existing model instead of starting from scratch."
         ),
         host=host,
         port=port,
