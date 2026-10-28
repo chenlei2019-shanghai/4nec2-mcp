@@ -81,6 +81,41 @@ def test_sanitize_deck_replaces_non_ascii_on_comment_cards():
     assert sanitized.startswith("CM ??")
 
 
+def test_sanitize_deck_inserts_ce_after_dangling_cm():
+    """G0KSC library decks have CM cards but no CE — the engine then reads the
+    first geometry card as a comment and dies with INCORRECT LABEL."""
+    deck = "CM no terminator\nGW 1 1 0 0 0 0 1 0 0.001\nEN\n"
+    sanitized = sanitize_deck(deck)
+    lines = [ln for ln in sanitized.splitlines() if ln.strip()]
+    assert lines[:3] == ["CM no terminator", "CE", "GW 1 1 0 0 0 0 1 0 0.001"]
+
+
+def test_sanitize_deck_does_not_insert_ce_when_ct_present():
+    deck = "CM comment\nCT\nGW 1 1 0 0 0 0 1 0 0.001\nEN\n"
+    sanitized = sanitize_deck(deck)
+    assert sum(1 for ln in sanitized.splitlines() if ln.strip() == "CE") == 0
+
+
+def test_sanitize_deck_compacts_overlong_numeric_cards():
+    """G0KSC library GW lines are 95 chars; the 80-column card limit truncates
+    the radius to zero -> GEOMETRY DATA CARD ERROR. Compact them instead."""
+    deck = (
+        "GW   1   20    0.000000   -3.546000    0.000000    0.000000"
+        "    3.546000    0.000000  0.00635000\nEN\n"
+    )
+    sanitized = sanitize_deck(deck)
+    gw = sanitized.splitlines()[0]
+    assert len(gw) <= 80
+    assert gw == "GW 1 20 0 -3.546 0 0 3.546 0 0.00635"
+
+
+def test_sanitize_deck_leaves_overlong_symbolic_cards_alone():
+    card = "GW 1 20 Xr -Hr Zel Xr Hr Zel Rwire " + "0.000000 " * 8
+    sanitized = sanitize_deck(card + "\nEN\n")
+    lines = [ln for ln in sanitized.splitlines() if ln.strip()]
+    assert lines == [card.rstrip(), "EN"]
+
+
 def test_engine_rejects_unknown_engine_name(nec4nec_dir):
     from nec2core.engine import NecError, resolve_engine
 

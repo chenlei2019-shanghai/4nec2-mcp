@@ -147,12 +147,39 @@ def resolve_engine(engine: str | os.PathLike[str] | None, nec4nec_dir: str | os.
     raise NecError(f"NEC engine not found: {engine}")
 
 
+def _compact_card(line: str) -> str:
+    """Re-emit an over-long numeric card compactly (single spaces, %g floats).
+
+    Only applied when every field after the label parses as a number — cards
+    with symbolic fields (SY expressions) are returned unchanged.
+    """
+    tokens = line.split()
+    if len(tokens) < 2:
+        return line
+    label, fields = tokens[0], tokens[1:]
+    try:
+        values = [float(f) for f in fields]
+    except ValueError:
+        return line
+    compact = [label]
+    compact.extend(f"{v:.10g}" for v in values)
+    return " ".join(compact)
+
+
 def sanitize_deck(text: str) -> str:
     """Make a card deck safe for the ANSI engines without changing card order.
 
     Non-ASCII characters are only stripped on comment cards (CM/CE/CT/CK);
     everything else is preserved, including any numeric symbols and comments.
-    A trailing EN card is appended when missing.
+    A trailing EN card is appended when missing.  When CM comment cards are
+    present but no CE terminates the comment section (the whole G0KSC model
+    library is written that way), a CE card is inserted after the last CM —
+    otherwise the engine reads the first geometry card as a comment and dies
+    with "INCORRECT LABEL FOR A COMMENT CARD".  Data cards longer than the
+    80-column card limit (the G0KSC library writes 95-char GW lines whose
+    radius starts at column 86) are re-tokenized compactly — otherwise the
+    engine truncates the line, reads a zero radius and dies with
+    "GEOMETRY DATA CARD ERROR".
     """
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     lines: list[str] = []
@@ -163,7 +190,16 @@ def sanitize_deck(text: str) -> str:
         elif any(ord(ch) > 127 for ch in line):
             # Defensive: keep data cards ANSI as well; engines abort otherwise.
             line = "".join(ch if ord(ch) < 128 else "?" for ch in line)
-        lines.append(line.rstrip())
+        line = line.rstrip()
+        if len(line) > 80 and label not in COMMENT_LABELS:
+            line = _compact_card(line)
+        lines.append(line)
+    meaningful = [ln for ln in lines if ln.strip()]
+    has_cm = any(ln[:2].upper() == "CM" for ln in meaningful)
+    has_ce = any(ln[:2].upper() in ("CE", "CT", "CK") for ln in meaningful)
+    if has_cm and not has_ce:
+        last_cm = max(i for i, ln in enumerate(lines) if ln.strip()[:2].upper() == "CM")
+        lines.insert(last_cm + 1, "CE")
     if not any(ln[:2].upper() == "EN" for ln in lines if ln.strip()):
         lines.append("EN")
     return "\n".join(lines) + "\n"
