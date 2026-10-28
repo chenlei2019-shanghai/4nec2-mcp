@@ -1,0 +1,25 @@
+# --- Python virtual environment / caches --------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- NEC engine output (regenerated on every run, often large) ----------
+*.out
+# ...except the small real .out kept as a parser fixture.
+!tests/fixtures/*.out
+
+# --- Rendered figures (nec_plot_* writes here by default) ---------------
+plots/
+
+# --- Local / editor debris ---------------------------------------------
+*.bak-*
+*.log
+.idea/
+.vscode/
+Thumbs.db
+desktop.ini

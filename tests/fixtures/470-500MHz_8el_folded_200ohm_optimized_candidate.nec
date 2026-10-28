@@ -1,0 +1,61 @@
+CM 470-500 MHz 8-element Yagi, folded dipole optimized for 200-ohm antenna-side match
+CM Result from local necpp NEC sweep/search. Use with 4:1 current balun to 50-ohm coax.
+CM 20 mm square boom, insulated stand-off, 8 mm aluminum tube elements.
+CM Target: flat 200-ohm impedance from 470-500 MHz, bandwidth over peak gain.
+CM Simulated reference points with necpp:
+CM 470 R=214.5 X=-89.6 SWR200=1.54 G=10.89 dBi
+CM 475 R=178.7 X=-63.0 SWR200=1.42 G=10.88 dBi
+CM 480 R=155.0 X=-20.5 SWR200=1.32 G=10.99 dBi
+CM 485 R=150.3 X= 34.5 SWR200=1.42 G=11.15 dBi
+CM 490 R=181.8 X= 90.2 SWR200=1.61 G=11.02 dBi
+CM 495 R=247.2 X= 87.8 SWR200=1.56 G=10.07 dBi
+CM 500 R=197.4 X= 25.3 SWR200=1.14 G= 7.95 dBi
+CM
+SY Rwire=0.004
+SY Zel=0.025
+SY FDgap=0.055
+SY Xr=0.000
+SY Xde=0.145
+SY Xd1=0.250
+SY Xd2=0.435
+SY Xd3=0.540
+SY Xd4=0.695
+SY Xd5=0.850
+SY Xd6=1.000
+SY Lr=0.322
+SY Lfd=0.275
+SY Ld1=0.248
+SY Ld2=0.263
+SY Ld3=0.261
+SY Ld4=0.258
+SY Ld5=0.256
+SY Ld6=0.253
+SY Hr=Lr/2
+SY Hfd=Lfd/2
+SY Hd1=Ld1/2
+SY Hd2=Ld2/2
+SY Hd3=Ld3/2
+SY Hd4=Ld4/2
+SY Hd5=Ld5/2
+SY Hd6=Ld6/2
+SY Zfront=Zel-FDgap/2
+SY Zback=Zel+FDgap/2
+CE
+GW 1 21 Xr  -Hr  Zel Xr   Hr  Zel Rwire
+GW 2 22 Xde -Hfd Zfront Xde Hfd Zfront Rwire
+GW 3 22 Xde -Hfd Zback  Xde Hfd Zback  Rwire
+GW 4 3  Xde -Hfd Zfront Xde -Hfd Zback Rwire
+GW 5 3  Xde  Hfd Zfront Xde  Hfd Zback Rwire
+GW 6 21 Xd1 -Hd1 Zel Xd1 Hd1 Zel Rwire
+GW 7 21 Xd2 -Hd2 Zel Xd2 Hd2 Zel Rwire
+GW 8 21 Xd3 -Hd3 Zel Xd3 Hd3 Zel Rwire
+GW 9 21 Xd4 -Hd4 Zel Xd4 Hd4 Zel Rwire
+GW 10 21 Xd5 -Hd5 Zel Xd5 Hd5 Zel Rwire
+GW 11 21 Xd6 -Hd6 Zel Xd6 Hd6 Zel Rwire
+GE 0
+GN -1
+EK
+EX 0 2 11 0 1 0
+FR 0 61 0 0 460 1
+RP 0 37 73 1000 0 0 5 5
+EN

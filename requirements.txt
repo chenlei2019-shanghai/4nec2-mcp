@@ -1,0 +1,9 @@
+# 4NEC2 MCP server runtime dependencies.
+# Everything else (argparse, subprocess, pathlib, re, math...) is Python 3.13 stdlib.
+# The [cli] extra is *not* required: FastMCP, starlette and uvicorn ship with mcp.
+mcp>=1.28,<2
+
+# Plotting tools (nec_plot_pattern / nec_plot_sweep) -> polar, 3-D lobe and
+# sweep/Smith dashboards.  Only needed for pictures: without it the server still
+# starts and every numeric tool keeps working (the plot tools return an error).
+matplotlib>=3.8

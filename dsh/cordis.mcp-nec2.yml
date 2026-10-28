@@ -1,0 +1,45 @@
+# ── 4NEC2 antenna simulation over MCP ─────────────────────────────────────────
+# Drop this entry into one of:
+#   • <DSH_HOME>/profiles/<name>/cordis.patch.yml   (persistent, after the profile layer)
+#   • a file passed as `dsh --profile <name> --patch ./cordis.mcp-nec2.yml`
+#
+# The local stdio MCP server lives in C:\4nec2-mcp-server (Python venv) and
+# drives a 4NEC2 NEC-2 engine (nec2dxs11k.exe). Tools reach the model as
+# mcp__nec2__<tool>, e.g. mcp__nec2__nec_run, mcp__nec2__nec_sweep.
+#
+# IMPORTANT: a patch entry of the form `- id / name / config` only overrides an
+# id that already exists in the composed tree; a brand-new plugin must be added
+# through an `insert` list (as below).
+#
+# Requirements:
+#   • @deepseek-ai/dsh-mcp-client resolvable from the profile (ships with dsh)
+#   • C:\4nec2 contains exe\nec2dxs11k.exe (or point NEC2_ENGINE elsewhere)
+#   • C:\4nec2-mcp-server\.venv\Scripts\python.exe has `mcp` installed
+- insert:
+    - id: mcp-nec2
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: nec2
+        transport: stdio
+        command: 'C:\4nec2-mcp-server\.venv\Scripts\python.exe'
+        args:
+          - 'C:\4nec2-mcp-server\mcp_4nec2_server.py'
+          - '--4nec2-dir'
+          - 'C:\4nec2'
+        cwd: 'C:\4nec2-mcp-server'
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+          PYTHONDONTWRITEBYTECODE: '1'
+          NEC4NEC_DIR: 'C:\4nec2'
+          NEC2_ENGINE: 'C:\4nec2\exe\nec2dxs11k.exe'
+        # nec_optimize / nec_sweep can run for minutes; calls cancel on timeout.
+        toolCallTimeoutMs: 300000
+        # Keep the harness bootable when 4NEC2 is unavailable; the tools then
+        # simply do not appear and one error is logged instead.
+        failOnStartupError: false
+        reconnect:
+          enabled: true
+          initialDelayMs: 500
+          maxDelayMs: 30000
+          maxAttempts: 10

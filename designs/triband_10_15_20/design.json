@@ -1,0 +1,399 @@
+{
+  "paths": {
+    "master": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20.nec",
+    "10m": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20_10m.nec",
+    "15m": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20_15m.nec",
+    "20m": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20_20m.nec"
+  },
+  "design": {
+    "name": "triband_10_15_20",
+    "boom_length_m": 7.8,
+    "radius_m": 0.01,
+    "bands": {
+      "10m": {
+        "freq_center_mhz": 28.5,
+        "elements": [
+          {
+            "name": "10R",
+            "role": "reflector",
+            "length_m": 5.263,
+            "z_m": 2.6,
+            "segments": 21
+          },
+          {
+            "name": "10D",
+            "role": "driven",
+            "length_m": 4.863,
+            "z_m": 5.6,
+            "segments": 21
+          },
+          {
+            "name": "10Dir",
+            "role": "director",
+            "length_m": 4.3157,
+            "z_m": 7.8,
+            "segments": 19
+          }
+        ]
+      },
+      "15m": {
+        "freq_center_mhz": 21.2,
+        "elements": [
+          {
+            "name": "15R",
+            "role": "reflector",
+            "length_m": 7.449,
+            "z_m": 1.1,
+            "segments": 31
+          },
+          {
+            "name": "15D",
+            "role": "driven",
+            "length_m": 6.6603,
+            "z_m": 4.1,
+            "segments": 31
+          }
+        ]
+      },
+      "20m": {
+        "freq_center_mhz": 14.15,
+        "elements": [
+          {
+            "name": "20R",
+            "role": "reflector",
+            "length_m": 10.6171,
+            "z_m": 0.0,
+            "segments": 41
+          },
+          {
+            "name": "20D",
+            "role": "driven",
+            "length_m": 9.8789,
+            "z_m": 3.3,
+            "segments": 41
+          }
+        ]
+      }
+    }
+  },
+  "bands": {
+    "10m": {
+      "center": {
+        "freq_mhz": 28.51,
+        "swr": 1.256,
+        "z": [
+          47.343,
+          -10.792
+        ],
+        "gain_max_db": 7.0,
+        "gain_theta_phi": [
+          0.0,
+          0.0
+        ],
+        "fb_db": 17.6,
+        "efficiency_percent": 99.82
+      },
+      "edges": {
+        "low": [
+          28.0,
+          1.716
+        ],
+        "high": [
+          29.7,
+          1.785
+        ]
+      },
+      "sweep": [
+        {
+          "freq_mhz": 28.0,
+          "swr": 1.716,
+          "gain_db": 6.97,
+          "fb_db": 17.35,
+          "efficiency_percent": 99.82
+        },
+        {
+          "freq_mhz": 28.17,
+          "swr": 1.547,
+          "gain_db": 6.96,
+          "fb_db": 17.52,
+          "efficiency_percent": 99.82
+        },
+        {
+          "freq_mhz": 28.34,
+          "swr": 1.394,
+          "gain_db": 6.98,
+          "fb_db": 17.61,
+          "efficiency_percent": 99.82
+        },
+        {
+          "freq_mhz": 28.51,
+          "swr": 1.256,
+          "gain_db": 7.0,
+          "fb_db": 17.6,
+          "efficiency_percent": 99.82
+        },
+        {
+          "freq_mhz": 28.68,
+          "swr": 1.133,
+          "gain_db": 7.03,
+          "fb_db": 17.51,
+          "efficiency_percent": 99.81
+        },
+        {
+          "freq_mhz": 28.85,
+          "swr": 1.051,
+          "gain_db": 7.08,
+          "fb_db": 17.37,
+          "efficiency_percent": 99.81
+        },
+        {
+          "freq_mhz": 29.02,
+          "swr": 1.124,
+          "gain_db": 7.13,
+          "fb_db": 17.14,
+          "efficiency_percent": 99.81
+        },
+        {
+          "freq_mhz": 29.19,
+          "swr": 1.253,
+          "gain_db": 7.2,
+          "fb_db": 16.86,
+          "efficiency_percent": 99.8
+        },
+        {
+          "freq_mhz": 29.36,
+          "swr": 1.404,
+          "gain_db": 7.27,
+          "fb_db": 16.51,
+          "efficiency_percent": 99.8
+        },
+        {
+          "freq_mhz": 29.53,
+          "swr": 1.58,
+          "gain_db": 7.35,
+          "fb_db": 16.11,
+          "efficiency_percent": 99.79
+        },
+        {
+          "freq_mhz": 29.7,
+          "swr": 1.785,
+          "gain_db": 7.44,
+          "fb_db": 15.65,
+          "efficiency_percent": 99.79
+        }
+      ]
+    },
+    "15m": {
+      "center": {
+        "freq_mhz": 21.18,
+        "swr": 1.192,
+        "z": [
+          41.966,
+          -0.529
+        ],
+        "gain_max_db": 5.74,
+        "gain_theta_phi": [
+          0.0,
+          0.0
+        ],
+        "fb_db": 11.93,
+        "efficiency_percent": 99.75
+      },
+      "edges": {
+        "low": [
+          21.0,
+          1.33
+        ],
+        "high": [
+          21.45,
+          1.286
+        ]
+      },
+      "sweep": [
+        {
+          "freq_mhz": 21.0,
+          "swr": 1.33,
+          "gain_db": 5.8,
+          "fb_db": 12.19,
+          "efficiency_percent": 99.74
+        },
+        {
+          "freq_mhz": 21.045,
+          "swr": 1.285,
+          "gain_db": 5.78,
+          "fb_db": 12.12,
+          "efficiency_percent": 99.75
+        },
+        {
+          "freq_mhz": 21.09,
+          "swr": 1.246,
+          "gain_db": 5.77,
+          "fb_db": 12.06,
+          "efficiency_percent": 99.75
+        },
+        {
+          "freq_mhz": 21.135,
+          "swr": 1.214,
+          "gain_db": 5.75,
+          "fb_db": 11.99,
+          "efficiency_percent": 99.75
+        },
+        {
+          "freq_mhz": 21.18,
+          "swr": 1.192,
+          "gain_db": 5.74,
+          "fb_db": 11.93,
+          "efficiency_percent": 99.75
+        },
+        {
+          "freq_mhz": 21.225,
+          "swr": 1.181,
+          "gain_db": 5.73,
+          "fb_db": 11.87,
+          "efficiency_percent": 99.75
+        },
+        {
+          "freq_mhz": 21.27,
+          "swr": 1.183,
+          "gain_db": 5.71,
+          "fb_db": 11.8,
+          "efficiency_percent": 99.76
+        },
+        {
+          "freq_mhz": 21.315,
+          "swr": 1.196,
+          "gain_db": 5.7,
+          "fb_db": 11.75,
+          "efficiency_percent": 99.76
+        },
+        {
+          "freq_mhz": 21.36,
+          "swr": 1.219,
+          "gain_db": 5.69,
+          "fb_db": 11.69,
+          "efficiency_percent": 99.76
+        },
+        {
+          "freq_mhz": 21.405,
+          "swr": 1.25,
+          "gain_db": 5.68,
+          "fb_db": 11.64,
+          "efficiency_percent": 99.76
+        },
+        {
+          "freq_mhz": 21.45,
+          "swr": 1.286,
+          "gain_db": 5.67,
+          "fb_db": 11.58,
+          "efficiency_percent": 99.76
+        }
+      ]
+    },
+    "20m": {
+      "center": {
+        "freq_mhz": 14.14,
+        "swr": 1.042,
+        "z": [
+          51.555,
+          -1.366
+        ],
+        "gain_max_db": 6.29,
+        "gain_theta_phi": [
+          0.0,
+          0.0
+        ],
+        "fb_db": 11.33,
+        "efficiency_percent": 99.69
+      },
+      "edges": {
+        "low": [
+          14.0,
+          1.309
+        ],
+        "high": [
+          14.35,
+          1.347
+        ]
+      },
+      "sweep": [
+        {
+          "freq_mhz": 14.0,
+          "swr": 1.309,
+          "gain_db": 6.54,
+          "fb_db": 10.74,
+          "efficiency_percent": 99.64
+        },
+        {
+          "freq_mhz": 14.035,
+          "swr": 1.219,
+          "gain_db": 6.48,
+          "fb_db": 10.97,
+          "efficiency_percent": 99.65
+        },
+        {
+          "freq_mhz": 14.07,
+          "swr": 1.142,
+          "gain_db": 6.42,
+          "fb_db": 11.14,
+          "efficiency_percent": 99.67
+        },
+        {
+          "freq_mhz": 14.105,
+          "swr": 1.077,
+          "gain_db": 6.35,
+          "fb_db": 11.26,
+          "efficiency_percent": 99.68
+        },
+        {
+          "freq_mhz": 14.14,
+          "swr": 1.042,
+          "gain_db": 6.29,
+          "fb_db": 11.33,
+          "efficiency_percent": 99.69
+        },
+        {
+          "freq_mhz": 14.175,
+          "swr": 1.07,
+          "gain_db": 6.23,
+          "fb_db": 11.36,
+          "efficiency_percent": 99.7
+        },
+        {
+          "freq_mhz": 14.21,
+          "swr": 1.122,
+          "gain_db": 6.17,
+          "fb_db": 11.34,
+          "efficiency_percent": 99.71
+        },
+        {
+          "freq_mhz": 14.245,
+          "swr": 1.177,
+          "gain_db": 6.11,
+          "fb_db": 11.29,
+          "efficiency_percent": 99.72
+        },
+        {
+          "freq_mhz": 14.28,
+          "swr": 1.234,
+          "gain_db": 6.05,
+          "fb_db": 11.21,
+          "efficiency_percent": 99.73
+        },
+        {
+          "freq_mhz": 14.315,
+          "swr": 1.29,
+          "gain_db": 5.99,
+          "fb_db": 11.1,
+          "efficiency_percent": 99.74
+        },
+        {
+          "freq_mhz": 14.35,
+          "swr": 1.347,
+          "gain_db": 5.93,
+          "fb_db": 10.98,
+          "efficiency_percent": 99.75
+        }
+      ]
+    }
+  }
+}
