@@ -69,8 +69,9 @@ C:\4nec2-mcp-server
 │  ├─ start-stdio.bat        # 用绝对路径拉起 stdio 版（install.ps1 生成）
 │  ├─ start-http.bat         # 用绝对路径拉起 HTTP 版（install.ps1 生成）
 │  ├─ check-tools.py         # MCP 握手自检：列出/调用工具
-│  ├─ design_triband.py      # 三波段八木：生成/评估/优化 NEC deck
-│  └─ ground_study.py        # 自由空间 vs 真实地面（5/8/10 m）仰角方向图对比
+│  ├─ design_triband.py      # 三波段八木：生成/评估/优化 NEC deck + 几何图
+│  ├─ ground_study.py        # 自由空间 vs 真实地面（5/8/10 m）仰角方向图对比
+│  └─ check-links.py         # 检查所有 Markdown 相对链接/图片是否存在
 ├─ docs\
 │  ├─ DSH-接入说明.md         # 接入 DeepSeek Harness 的完整步骤
 │  ├─ showcase-triband.md    # 成果展示：三波段八木（指标 + 全部图）

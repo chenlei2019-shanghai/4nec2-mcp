@@ -3,7 +3,7 @@
 一套用 NEC-2 优化出来的**单 boom 嵌套三波段八木**：10 m 波段 3 单元、15 m 与 20 m 各 2 单元，
 三个波段各自中心直接 50 Ω 馈电，boom 总长 7.80 m，三份波段 deck 全部在本项目的 MCP 工具里跑通。
 
-工程细节、优化过程与已知限制见 [设计文档](../../designs/triband_10_15_20/README.md)；
+工程细节、优化过程与已知限制见 [设计文档](../designs/triband_10_15_20/README.md)；
 本文只放结果与图，方便快速判断这套天线值不值得做。
 
 ---
@@ -22,7 +22,7 @@
 
 ## 2. 几何
 
-![几何示意](../../docs/images/triband/geometry.png)
+![几何示意](images/triband/geometry.png)
 
 | 元件 | 波段 | 角色 | 长度 (m) | 长度 (λ) | boom 位置 z (m) | 段数 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -42,15 +42,15 @@
 
 10 m（27.8–30.1 MHz，24 点）：
 
-![10 m 扫频](../../docs/images/triband/triband_10m_sweep.png)
+![10 m 扫频](images/triband/triband_10m_sweep.png)
 
 15 m（20.8–21.7 MHz，19 点）：
 
-![15 m 扫频](../../docs/images/triband/triband_15m_sweep.png)
+![15 m 扫频](images/triband/triband_15m_sweep.png)
 
 20 m（13.8–14.7 MHz，19 点）：
 
-![20 m 扫频](../../docs/images/triband/triband_20m_sweep.png)
+![20 m 扫频](images/triband/triband_20m_sweep.png)
 
 每张图都是同一套六联面板：SWR（含 SWR = 1.5 / 2 参考线）、最大增益 + 前后比、输入阻抗 R/X、
 Smith 圆图（SWR = 1/2/3 圆 + Γ 轨迹 + 频点注记）、底部「效率（导体损耗）」。
@@ -61,13 +61,13 @@ Smith 圆图（SWR = 1/2/3 圆 + Γ 轨迹 + 频点注记）、底部「效率�
 
 | 10 m @ 28.50 MHz | 15 m @ 21.20 MHz | 20 m @ 14.15 MHz |
 | --- | --- | --- |
-| ![10 m 方向图](../../docs/images/triband/triband_10m_polar.png) | ![15 m 方向图](../../docs/images/triband/triband_15m_polar.png) | ![20 m 方向图](../../docs/images/triband/triband_20m_polar.png) |
+| ![10 m 方向图](images/triband/triband_10m_polar.png) | ![15 m 方向图](images/triband/triband_15m_polar.png) | ![20 m 方向图](images/triband/triband_20m_polar.png) |
 
 3-D 波瓣（球面 37 × 73 网格，5° 步进，按真实 dBi 着色）：
 
 | 10 m | 15 m | 20 m |
 | --- | --- | --- |
-| ![10 m 3D](../../docs/images/triband/triband_10m_3d.png) | ![15 m 3D](../../docs/images/triband/triband_15m_3d.png) | ![20 m 3D](../../docs/images/triband/triband_20m_3d.png) |
+| ![10 m 3D](images/triband/triband_10m_3d.png) | ![15 m 3D](images/triband/triband_15m_3d.png) | ![20 m 3D](images/triband/triband_20m_3d.png) |
 
 > ⚠️ 对 boom 沿 +Z 的八木，`nec_plot_pattern` 的 `plane="azimuth"`（固定 θ = 90°）得到的是**垂直 boom 的平面**，
 > 只有 −0.8 dBi，别当成"方位图"。看主瓣请用 `plane="elevation"` 或 3-D。
@@ -77,7 +77,7 @@ Smith 圆图（SWR = 1/2/3 圆 + Γ 轨迹 + 频点注记）、底部「效率�
 把天线转成水平姿态（boom 沿 +X、振子沿 Y、导线全部在 `z = H`），地面 `GN 2 0 0 0 13.0 0.005`
 （εr = 13、σ = 0.005 S/m），与自由空间对比，取 1° 步进的仰角剖面：
 
-![10 m 架高对比](../../docs/images/triband/triband_10m_elevation_vs_height.png)
+![10 m 架高对比](images/triband/triband_10m_elevation_vs_height.png)
 
 | 波段 | 条件 | 峰值增益 | 起飞角 | 10° 仰角 | 20° 仰角 |
 | --- | --- | --- | --- | --- | --- |
@@ -95,8 +95,8 @@ Smith 圆图（SWR = 1/2/3 圆 + Γ 轨迹 + 频点注记）、底部「效率�
 | 20 m | 地面 10 m | **10.77 dBi** | 28° | 5.90 | 10.04 |
 
 另两张（15 m / 20 m）：
-[15 m](../../docs/images/triband/triband_15m_elevation_vs_height.png) ·
-[20 m](../../docs/images/triband/triband_20m_elevation_vs_height.png)
+[15 m](images/triband/triband_15m_elevation_vs_height.png) ·
+[20 m](images/triband/triband_20m_elevation_vs_height.png)
 
 结论：
 
@@ -146,11 +146,11 @@ Smith 圆图（SWR = 1/2/3 圆 + Γ 轨迹 + 频点注记）、底部「效率�
 
 | 文件 | 内容 |
 | --- | --- |
-| [`triband_10_15_20.nec`](../../designs/triband_10_15_20/triband_10_15_20.nec) | master deck（10 m 馈电 + 球面 RP） |
-| [`triband_10_15_20_10m.nec`](../../designs/triband_10_15_20/triband_10_15_20_10m.nec) | 10 m 工作，15/20 m 驱动开路 |
-| [`triband_10_15_20_15m.nec`](../../designs/triband_10_15_20/triband_10_15_20_15m.nec) | 15 m 工作 |
-| [`triband_10_15_20_20m.nec`](../../designs/triband_10_15_20/triband_10_15_20_20m.nec) | 20 m 工作 |
-| [`design.json`](../../designs/triband_10_15_20/design.json) | 三波段完整扫描数据 + 几何 |
-| [`ground_patterns.json`](../../designs/triband_10_15_20/ground_patterns.json) | 自由空间 / 5 / 8 / 10 m 仰角剖面 |
+| [`triband_10_15_20.nec`](../designs/triband_10_15_20/triband_10_15_20.nec) | master deck（10 m 馈电 + 球面 RP） |
+| [`triband_10_15_20_10m.nec`](../designs/triband_10_15_20/triband_10_15_20_10m.nec) | 10 m 工作，15/20 m 驱动开路 |
+| [`triband_10_15_20_15m.nec`](../designs/triband_10_15_20/triband_10_15_20_15m.nec) | 15 m 工作 |
+| [`triband_10_15_20_20m.nec`](../designs/triband_10_15_20/triband_10_15_20_20m.nec) | 20 m 工作 |
+| [`design.json`](../designs/triband_10_15_20/design.json) | 三波段完整扫描数据 + 几何 |
+| [`ground_patterns.json`](../designs/triband_10_15_20/ground_patterns.json) | 自由空间 / 5 / 8 / 10 m 仰角剖面 |
 
 > 引擎：`C:\4nec2\exe\nec2dxs11k.exe`（NEC-2，双精度）。所有数字都可以用上面的命令逐条复算。
