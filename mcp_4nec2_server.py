@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,6 +34,7 @@ from nec2core import (  # noqa: E402
     list_engines,
     parse_deck,
     parse_output,
+    sanitize_deck,
     set_frequency,
     set_single_frequency,
     summarize_block,
@@ -40,7 +42,7 @@ from nec2core import (  # noqa: E402
 from nec2core.metrics import DEFAULT_Z0  # noqa: E402
 
 SERVER_NAME = "4nec2"
-SERVER_VERSION = "2.1.0"
+SERVER_VERSION = "2.2.0"
 
 DEFAULT_MODEL_DIRS = (Path(r"C:\4nec2\models"), Path(r"C:\4nec2\necfile"), Path(r"C:\4nec2"))
 
@@ -578,6 +580,51 @@ def build_server(nec4nec_dir: str | None = None, host: str = "127.0.0.1", port: 
                 "blocks": [summarize_block(b, float(z0)) for b in parsed.blocks],
                 "errors": parsed.errors,
                 "warnings": parsed.warnings,
+            }
+        except Exception as exc:  # noqa: BLE001
+            return _err(str(exc))
+
+    @mcp.tool()
+    def nec_open_gui(path: str) -> dict:
+        """Open a model in the 4NEC2 GUI for interactive inspection and runs.
+
+        The deck is sanitized first: when it needs repair (missing CE card or
+        >80-column data cards — the whole G0KSC library is like that), a
+        sanitized copy ``<name>_gui.nec`` is written next to the source and
+        opened instead, leaving the original untouched. In the GUI press F7
+        (Calculate) to run the far-field simulation.
+
+        Args:
+            path: path to the .nec model (absolute or relative to C:\\4nec2\\models).
+        """
+        try:
+            resolved = _resolve_path(path)
+            text = _read_text(resolved)
+            clean = sanitize_deck(text.replace("\r\n", "\n"))
+            target = resolved
+            if clean != text.replace("\r\n", "\n").rstrip("\n") + "\n":
+                target = resolved.with_name(resolved.stem + "_gui.nec")
+                target.write_text(clean, encoding="ascii")
+            gui = find_nec4nec_dir(nec4nec_dir) / "exe" / "4nec2.exe"
+            if not gui.is_file():
+                return _err(f"4nec2.exe not found at {gui}")
+            # 4nec2 rejects a quoted model path (opens an ERROR window), so
+            # build the command line manually; use the 8.3 short path when
+            # the model path contains spaces.
+            model_arg = str(target)
+            if " " in model_arg:
+                import ctypes
+
+                buf = ctypes.create_unicode_buffer(260)
+                if ctypes.windll.kernel32.GetShortPathNameW(model_arg, buf, 260):
+                    model_arg = buf.value
+            subprocess.Popen(f'"{gui}" {model_arg}', cwd=str(gui.parent))  # noqa: S603
+            return {
+                "status": "ok",
+                "gui": str(gui),
+                "model_opened": str(target),
+                "sanitized_copy_written": target != resolved,
+                "hint": "4NEC2 已打开模型；在 GUI 中按 F7（Calculate）运行远场仿真。",
             }
         except Exception as exc:  # noqa: BLE001
             return _err(str(exc))

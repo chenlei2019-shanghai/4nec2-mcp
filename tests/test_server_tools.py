@@ -31,6 +31,7 @@ EXPECTED_TOOLS = {
     "nec_optimize",
     "nec_plot_pattern",
     "nec_plot_sweep",
+    "nec_open_gui",
 }
 
 

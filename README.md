@@ -5,7 +5,7 @@
 建 Yagi 模型、算阻抗/SWR/增益/前后比、扫频、读 `.out` 文件、按目标做几何优化。
 
 - 传输方式：`stdio`（DSH 等客户端拉起的默认方式）与 `streamable-http`
-- 10 个工具，全部返回 JSON（错误统一为 `{"status": "error", "error": "..."}`）
+- 11 个工具，全部返回 JSON（错误统一为 `{"status": "error", "error": "..."}`）
 - 除数值结果外还能直接出图：极坐标方向图、3-D 波瓣、SWR/增益/阻抗/Smith 圆图扫频面板（PNG）
 - 引擎是交互式 exe，server 内部已用临时目录 + `input.inp / output.out` 正确驱动，并屏蔽黑窗
 - 不修改 4NEC2 的安装文件；`--4nec2-dir` 可指向任意 4NEC2 安装目录
@@ -71,7 +71,7 @@
 
 ```text
 C:\4nec2-mcp-server
-├─ mcp_4nec2_server.py       # MCP server 入口（FastMCP，10 个工具 + CLI 参数）
+├─ mcp_4nec2_server.py       # MCP server 入口（FastMCP，11 个工具 + CLI 参数）
 ├─ nec2core\                 # 与 MCP 无关的核心库，可单独 import 使用
 │  ├─ engine.py              #   发现引擎、校验/清洗 deck、以临时目录驱动引擎
 │  ├─ model.py               #   .nec 卡片解析、SY 符号求值、改频
@@ -154,7 +154,7 @@ python -m venv .venv
 ### 3.3 自检（不经过 DSH）
 
 ```powershell
-# 启动 server、握手、列出 10 个工具
+# 启动 server、握手、列出 11 个工具
 .\.venv\Scripts\python.exe scripts\check-tools.py
 
 # 顺便调用一个工具（--arg 每个参数写一项，PowerShell 5.1 下最稳）
@@ -255,6 +255,7 @@ asyncio.run(main())
 | `nec_optimize` | 按目标做几何优化（坐标下降） | 是（多次） |
 | `nec_plot_pattern` | 出极坐标切面图与（可选）3-D 波瓣 PNG | 是 |
 | `nec_plot_sweep` | 出 SWR/增益/阻抗/Smith 四联扫频面板 PNG | 是（多次） |
+| `nec_open_gui` | 在 4NEC2 GUI 中打开模型（缺 CE / 超 80 列的 deck 自动写 `*_gui.nec` 修复副本），按 F7 手动运行 | 否 |
 
 ### 5.1 `nec_list_engines()`
 
@@ -425,6 +426,16 @@ SWR≤2 带宽 484–487 MHz（3 MHz）。
 > 出图依赖 `matplotlib`（含 numpy）。server 启动时会在**主线程**预加载 matplotlib（`_preload_plotting()`，
 > 约 0.3 s）；这是必需的：若把首次 numpy C 扩展导入放到 MCP 的 anyio 工作线程里，导入会卡在 Windows 加载器锁上，
 > 工具会一直不返回，直到客户端超时。设 `NEC_PLOTS_PRELOAD=0` 或加 `--no-plots` 可跳过预加载（不推荐）。
+
+### 5.11 `nec_open_gui(path)`
+
+在 4NEC2 GUI 里打开模型，用于人工复核与交互式仿真（GUI 里按 **F7** / Calculate 出远场结果）。
+
+- 打开前自动走 `sanitize_deck`：若原文件缺 CE 卡或有超 80 列的数据卡（G0KSC 库全部如此），
+  会在旁边写一个修复副本 `<原名>_gui.nec` 并打开副本，**原文件不动**；
+- 4NEC2 的命令行有两个坑（已内置规避）：模型路径**不能带引号**（带引号会弹 ERROR 窗口）；
+  路径含空格时自动转 8.3 短路径。
+- 返回 `status`、`gui`、`model_opened`、`sanitized_copy_written`。
 
 ## 6. 返回结构与约定
 
