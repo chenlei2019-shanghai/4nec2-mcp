@@ -194,7 +194,14 @@ def build_server(nec4nec_dir: str | None = None, host: str = "127.0.0.1", port: 
             "generates a Yagi model; 'nec_optimize' tunes geometry; "
             "'nec_plot_pattern' and 'nec_plot_sweep' render PNG radiation patterns "
             "and SWR/gain/impedance curves. All metrics are "
-            "in dBi and ohms; SWR assumes the feed impedance given by z0 (default 50)."
+            "in dBi and ohms; SWR assumes the feed impedance given by z0 (default 50). "
+            "Before designing a NEW antenna, confirm requirements with the user first "
+            "(see docs/设计需求清单.md): bands/center frequencies, bandwidth and SWR "
+            "target, element count and boom length limit, full-size vs loaded, element "
+            "tube diameter (uniform or tapered sections), and for MULTI-BAND antennas "
+            "the feed topology — separate feedlines per band, all driven elements "
+            "hardwired in parallel to one balun, open-sleeve, or trapped — plus power "
+            "rating. The feed topology changes the design fundamentally."
         ),
         host=host,
         port=port,

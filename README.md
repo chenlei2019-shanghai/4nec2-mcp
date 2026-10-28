@@ -9,6 +9,7 @@
 - 除数值结果外还能直接出图：极坐标方向图、3-D 波瓣、SWR/增益/阻抗/Smith 圆图扫频面板（PNG）
 - 引擎是交互式 exe，server 内部已用临时目录 + `input.inp / output.out` 正确驱动，并屏蔽黑窗
 - 不修改 4NEC2 的安装文件；`--4nec2-dir` 可指向任意 4NEC2 安装目录
+- 设计新天线前请先和用户确认需求（馈电拓扑、振子直径、尺寸约束等）：[docs/设计需求清单.md](docs/设计需求清单.md)
 
 ## 🏆 成果展示：[10 / 15 / 20 m 三波段单 boom 八木](docs/showcase-triband.md)
 
@@ -88,6 +89,7 @@ C:\4nec2-mcp-server
 │  └─ check-links.py         # 检查所有 Markdown 相对链接/图片是否存在
 ├─ docs\
 │  ├─ DSH-接入说明.md         # 接入 DeepSeek Harness 的完整步骤
+│  ├─ 设计需求清单.md         # 设计天线前必须先向用户确认的需求 checklist
 │  ├─ showcase-triband.md    # 成果展示：三波段八木（指标 + 全部图）
 │  └─ images\                # README / 展示页引用的示例图
 ├─ dsh\cordis.mcp-nec2.yml   # 可直接插入的 DSH 配置条目（参考副本）
