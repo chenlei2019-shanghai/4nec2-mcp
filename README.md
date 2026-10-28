@@ -10,6 +10,17 @@
 - 引擎是交互式 exe，server 内部已用临时目录 + `input.inp / output.out` 正确驱动，并屏蔽黑窗
 - 不修改 4NEC2 的安装文件；`--4nec2-dir` 可指向任意 4NEC2 安装目录
 
+典型输出（`nec_plot_pattern` / `nec_plot_sweep` 直接返回 PNG 路径）：
+
+| 极坐标方向图 + 3-D 波瓣（8 元 Yagi @ 478.875 MHz） | |
+| --- | --- |
+| ![方向图](docs/images/demo/yagi8_478MHz_polar.png) | ![3-D](docs/images/demo/yagi8_478MHz_3d.png) |
+
+![扫频曲线](docs/images/triband/triband_10m_sweep.png)
+
+更多：单 boom 10/15/20 m 三波段八木的完整设计、地面架设高度对比见
+[designs/triband_10_15_20](designs/triband_10_15_20/README.md)。
+
 ---
 
 ## 1. 环境要求

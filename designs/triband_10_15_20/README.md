@@ -63,17 +63,21 @@ boom 全长 **7.80 m**。波长归一化（按各自波段中心频率）：10R 
 ## 5. 曲线与方向图
 
 * 驻波 / 增益 / 前后比 / 阻抗 / Smith / 效率六合一（每张图都带「频率 (MHz)」坐标轴）：
-  `../../plots/triband/10m/triband_10_15_20_10m_sweep.png`（27.8–30.1 MHz）
-  `../../plots/triband/15m/triband_10_15_20_15m_sweep.png`（20.8–21.7 MHz）
-  `../../plots/triband/20m/triband_10_15_20_20m_sweep.png`（13.8–14.7 MHz）
+  [`triband_10m_sweep.png`](../../docs/images/triband/triband_10m_sweep.png)（27.8–30.1 MHz）
+  [`triband_15m_sweep.png`](../../docs/images/triband/triband_15m_sweep.png)（20.8–21.7 MHz）
+  [`triband_20m_sweep.png`](../../docs/images/triband/triband_20m_sweep.png)（13.8–14.7 MHz）
 * 仰角面（E 面，φ = 90°，0° = 沿 +Z 即 boom 正前方、90° = 垂直 boom）极坐标方向图：
-  `../../plots/triband/10m/triband_10_15_20_28.500MHz_polar.png`
-  `../../plots/triband/15m/triband_10_15_20_15m_21.200MHz_polar.png`
-  `../../plots/triband/20m/triband_10_15_20_20m_14.150MHz_polar.png`
+  [`triband_10m_polar.png`](../../docs/images/triband/triband_10m_polar.png)
+  [`triband_15m_polar.png`](../../docs/images/triband/triband_15m_polar.png)
+  [`triband_20m_polar.png`](../../docs/images/triband/triband_20m_polar.png)
 * 3-D 立体方向图（球面 37×73，5° 步进）：
-  `../../plots/triband/10m/triband_10_15_20_28.500MHz_3d.png`
-  `../../plots/triband/15m/triband_10_15_20_15m_21.200MHz_3d.png`
-  `../../plots/triband/20m/triband_10_15_20_20m_14.150MHz_3d.png`
+  [`triband_10m_3d.png`](../../docs/images/triband/triband_10m_3d.png)
+  [`triband_15m_3d.png`](../../docs/images/triband/triband_15m_3d.png)
+  [`triband_20m_3d.png`](../../docs/images/triband/triband_20m_3d.png)
+
+![10 m 扫频曲线](../../docs/images/triband/triband_10m_sweep.png)
+
+> 仓库里的图放在 `docs/images/`；自己重跑 `nec_plot_*` 时默认写到 `plots/`（已 `.gitignore`）。
 
 > 注意：对 boom 沿 +Z 的八木，`nec_plot_pattern` 的 `plane="azimuth"`（固定 θ = 90°）得到的是
 > **垂直 boom 的平面**，增益只有 −0.8 dBi，不适合作为"方位方向图"；要看主瓣请用 `plane="elevation"` 或 3-D。
@@ -101,9 +105,11 @@ boom 全长 **7.80 m**。波长归一化（按各自波段中心频率）：10R 
 
 图（左：极坐标仰角面；右：0–60° 直角剖面，四条曲线 = 自由空间 / 5 m / 8 m / 10 m）：
 
-* `../../plots/triband/10m/triband_10_15_20_10m_elevation_vs_height.png`
-* `../../plots/triband/15m/triband_10_15_20_15m_elevation_vs_height.png`
-* `../../plots/triband/20m/triband_10_15_20_20m_elevation_vs_height.png`
+* [`triband_10m_elevation_vs_height.png`](../../docs/images/triband/triband_10m_elevation_vs_height.png)
+* [`triband_15m_elevation_vs_height.png`](../../docs/images/triband/triband_15m_elevation_vs_height.png)
+* [`triband_20m_elevation_vs_height.png`](../../docs/images/triband/triband_20m_elevation_vs_height.png)
+
+![10 m 波段：架设高度对仰角方向图的影响](../../docs/images/triband/triband_10m_elevation_vs_height.png)
 
 结论：
 
