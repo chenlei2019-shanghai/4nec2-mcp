@@ -10,16 +10,31 @@
 - 引擎是交互式 exe，server 内部已用临时目录 + `input.inp / output.out` 正确驱动，并屏蔽黑窗
 - 不修改 4NEC2 的安装文件；`--4nec2-dir` 可指向任意 4NEC2 安装目录
 
-典型输出（`nec_plot_pattern` / `nec_plot_sweep` 直接返回 PNG 路径）：
+## 🏆 成果展示：[10 / 15 / 20 m 三波段单 boom 八木](docs/showcase-triband.md)
+
+用本项目的工具从零设计并优化出来的一套**三波段嵌套八木**（10 m 3 单元、15/20 m 各 2 单元，直接 50 Ω 馈电）：
+带内 SWR ≤ 1.8、增益 5.7–7.0 dBi、效率 99.7 %，附带几何图、驻波/效率曲线、方向图与架高对比。
+
+![几何示意](docs/images/triband/geometry.png)
+
+| 波段 | 中心 SWR | 增益 | 前后比 | 效率 |
+| --- | --- | --- | --- | --- |
+| 10 m | 1.256 | 7.00 dBi | 17.6 dB | 99.82 % |
+| 15 m | 1.192 | 5.74 dBi | 11.9 dB | 99.75 % |
+| 20 m | 1.042 | 6.29 dBi | 11.3 dB | 99.69 % |
+
+→ 完整成果页 [docs/showcase-triband.md](docs/showcase-triband.md) ·
+工程细节 [designs/triband_10_15_20](designs/triband_10_15_20/README.md)
+
+---
+
+## 典型输出（`nec_plot_pattern` / `nec_plot_sweep` 直接返回 PNG 路径）
 
 | 极坐标方向图 + 3-D 波瓣（8 元 Yagi @ 478.875 MHz） | |
 | --- | --- |
 | ![方向图](docs/images/demo/yagi8_478MHz_polar.png) | ![3-D](docs/images/demo/yagi8_478MHz_3d.png) |
 
 ![扫频曲线](docs/images/triband/triband_10m_sweep.png)
-
-更多：单 boom 10/15/20 m 三波段八木的完整设计、地面架设高度对比见
-[designs/triband_10_15_20](designs/triband_10_15_20/README.md)。
 
 ---
 
@@ -57,9 +72,11 @@ C:\4nec2-mcp-server
 │  ├─ design_triband.py      # 三波段八木：生成/评估/优化 NEC deck
 │  └─ ground_study.py        # 自由空间 vs 真实地面（5/8/10 m）仰角方向图对比
 ├─ docs\
-│  └─ DSH-接入说明.md         # 接入 DeepSeek Harness 的完整步骤
+│  ├─ DSH-接入说明.md         # 接入 DeepSeek Harness 的完整步骤
+│  ├─ showcase-triband.md    # 成果展示：三波段八木（指标 + 全部图）
+│  └─ images\                # README / 展示页引用的示例图
 ├─ dsh\cordis.mcp-nec2.yml   # 可直接插入的 DSH 配置条目（参考副本）
-├─ designs\                  # 示例天线工程（含 NEC deck、几何表、仿真结果）
+├─ designs\                  # 示例天线工程（含 NEC deck、几何图、仿真结果）
 ├─ tests\                    # pytest 用例与夹具（.nec / .out）
 ├─ plots\                    # nec_plot_* 默认输出目录（生成物，已 gitignore）
 ├─ pytest.ini                # engine / server 集成测试标记

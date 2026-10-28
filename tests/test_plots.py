@@ -162,3 +162,38 @@ def test_elevation_comparison_rejects_curves_without_samples(tmp_path: Path):
         plots.elevation_comparison_polar(
             [{"label": "empty", "pairs": []}], tmp_path / "empty_elevation.png"
         )
+
+
+def _synthetic_elements() -> list[dict]:
+    return [
+        {"name": "20R", "band": "20m", "role": "reflector", "length": 10.6, "z": 0.0, "segments": 41},
+        {"name": "10R", "band": "10m", "role": "reflector", "length": 5.26, "z": 2.6, "segments": 21},
+        {"name": "20D", "band": "20m", "role": "driven", "length": 9.88, "z": 3.3, "segments": 41},
+        {"name": "10D", "band": "10m", "role": "driven", "length": 4.86, "z": 5.6, "segments": 21},
+    ]
+
+
+def test_geometry_schematic_draws_elements_and_table(tmp_path: Path):
+    out = tmp_path / "geometry.png"
+    info = plots.geometry_schematic(_synthetic_elements(), out, title="test", subtitle="sub")
+
+    assert out.exists()
+    assert out.stat().st_size > 20_000
+    assert info["elements"] == 4
+    assert info["boom_length_m"] == pytest.approx(5.6, abs=1e-6)
+    assert info["bands"] == ["20m", "10m"]
+    assert info["table"]["rows"] == 4
+
+
+def test_geometry_schematic_can_skip_the_table(tmp_path: Path):
+    out = tmp_path / "geometry_plain.png"
+    info = plots.geometry_schematic(_synthetic_elements()[:2], out, show_table=False)
+
+    assert out.exists()
+    assert info["table"] is None
+    assert info["elements"] == 2
+
+
+def test_geometry_schematic_rejects_empty_input(tmp_path: Path):
+    with pytest.raises(ValueError, match="no elements to draw"):
+        plots.geometry_schematic([], tmp_path / "empty_geometry.png")

@@ -5,6 +5,30 @@
     "15m": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20_15m.nec",
     "20m": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\triband_10_15_20_20m.nec"
   },
+  "geometry": {
+    "path": "C:\\4nec2-mcp-server\\designs\\triband_10_15_20\\geometry.png",
+    "size_bytes": 149790,
+    "elements": 7,
+    "boom_length_m": 7.8,
+    "bands": [
+      "20m",
+      "15m",
+      "10m"
+    ],
+    "dpi": 140,
+    "table": {
+      "rows": 7,
+      "columns": [
+        "元件",
+        "波段",
+        "角色",
+        "长度 (m)",
+        "长度 (λ)",
+        "z (m)",
+        "段数"
+      ]
+    }
+  },
   "design": {
     "name": "triband_10_15_20",
     "boom_length_m": 7.8,

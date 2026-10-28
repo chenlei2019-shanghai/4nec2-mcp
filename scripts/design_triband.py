@@ -316,6 +316,31 @@ def write_decks(design: Design, out_dir: Path) -> dict[str, str]:
     return paths
 
 
+def draw_geometry(design: Design, out_path: Path) -> dict:
+    """Render the plan-view geometry sketch and element table (needs matplotlib)."""
+    from nec2core import plots
+
+    elements = [
+        {
+            "name": element.name,
+            "band": element.band,
+            "role": element.role,
+            "length": element.length,
+            "z": element.z,
+            "segments": element.segments,
+            "wavelength_m": wavelength(BANDS[element.band]["center"]),
+        }
+        for element in design.sorted_elements()
+    ]
+    return plots.geometry_schematic(
+        elements,
+        out_path,
+        title="三波段（10 / 15 / 20 m）单 boom 嵌套八木 · 几何示意",
+        subtitle=(f"boom {design.boom_length:.3f} m；单元长度按真实尺寸绘制，"
+                  f"下方数字为相邻单元的间距（m）；黄色行为该波段的馈电单元"),
+    )
+
+
 def band_report(engine: NecEngine, design: Design) -> dict:
     report: dict = {"design": design.describe(), "bands": {}}
     for band in BANDS:
@@ -378,8 +403,14 @@ def main(argv: list[str] | None = None) -> int:
 
     report = band_report(engine, design)
     paths = write_decks(design, out_dir)
+    geometry: dict | None = None
+    try:
+        geometry = draw_geometry(design, out_dir / "geometry.png")
+    except Exception as exc:  # matplotlib is optional
+        print(f"[geometry] skipped: {type(exc).__name__}: {exc}", flush=True)
     (out_dir / "design.json").write_text(
-        json.dumps({"paths": paths, **report}, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({"paths": paths, "geometry": geometry, **report}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     (out_dir / "design_summary.txt").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"

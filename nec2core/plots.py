@@ -8,6 +8,10 @@ Three kinds of figures are produced:
   (an ``RP`` card with both NTH and NPH > 1), coloured by gain.
 * ``sweep_dashboard``– SWR, gain/front-to-back, R/X and a Smith chart versus
   frequency.
+* ``geometry_schematic`` – plan-view sketch of a boom-mounted Yagi with an
+  element table (length, λ, boom position, segment count).
+* ``elevation_comparison_polar`` – several elevation cuts on one polar plot
+  (used for the "antenna height above ground" study).
 
 The module imports matplotlib lazily so the MCP server still starts (and all
 parsing/engine tools still work) on machines without matplotlib installed.
@@ -658,3 +662,171 @@ def sweep_dashboard(
         "dpi": dpi,
         "efficiency_percent": efficiency_payload,
     }
+
+
+#: Default colour per band used by :func:`geometry_schematic`.
+BAND_COLORS = {"10m": "#d32f2f", "15m": "#2e7d32", "20m": "#1565c0"}
+
+_FALLBACK_COLORS = ("#6a1b9a", "#ef6c00", "#00838f", "#ad1457")
+
+_ROLE_LABELS = {"reflector": "反射器", "driven": "驱动", "director": "引向"}
+
+
+def geometry_schematic(
+    elements: Sequence[dict],
+    out_path: str | Path,
+    *,
+    title: str | None = None,
+    subtitle: str | None = None,
+    dpi: int = 140,
+    colors: dict[str, str] | None = None,
+    show_table: bool = True,
+) -> dict:
+    """Draw a plan-view sketch of a boom-mounted Yagi plus an element table.
+
+    ``elements`` is a sequence of dicts with ``name``, ``length`` (tip to tip,
+    metres) and ``z`` (position along the boom, metres). ``band``, ``role``
+    (``reflector`` / ``driven`` / ``director``), ``segments``, ``tag`` and
+    ``wavelength_m`` are optional and only drive colouring and labels; driven
+    elements get a feed dot at their centre.
+    """
+    plt = _plt()
+
+    rows = [dict(element) for element in elements]
+    if not rows:
+        raise ValueError("no elements to draw")
+    rows.sort(key=lambda row: float(row["z"]))
+    path = _ensure_parent(Path(out_path))
+
+    bands: list[str] = []
+    for row in rows:
+        band = str(row.get("band") or "-")
+        if band not in bands:
+            bands.append(band)
+    palette = dict(BAND_COLORS) if colors is None else dict(colors)
+    for index, band in enumerate(bands):
+        palette.setdefault(band, _FALLBACK_COLORS[index % len(_FALLBACK_COLORS)])
+
+    boom = max(float(row["z"]) for row in rows)
+    half = max(float(row["length"]) for row in rows) / 2.0
+
+    if show_table:
+        fig = plt.figure(figsize=(12.4, 9.6), layout="constrained")
+        grid = fig.add_gridspec(2, 1, height_ratios=[1.75, 1.0])
+        ax = fig.add_subplot(grid[0])
+        table_ax = fig.add_subplot(grid[1])
+    else:
+        fig = plt.figure(figsize=(11.6, 6.6), layout="constrained")
+        ax = fig.add_subplot(1, 1, 1)
+        table_ax = None
+
+    # Boom runs up the middle, elements stick out horizontally: that keeps the
+    # sketch landscape, which reads better on a README page.
+    ax.set_xlim(-half * 1.30, half * 1.30)
+    ax.set_ylim(-0.45, boom + 0.55)
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True, color="#e8e8e8", linestyle=":", linewidth=0.7, zorder=0)
+    ax.set_axisbelow(True)
+    ax.set_xlabel("单元展宽 (m，尖端到尖端)")
+    ax.set_ylabel("沿 boom 位置 z (m)")
+
+    ax.plot([0.0, 0.0], [0.0, boom], color="#9e9e9e", linewidth=1.1,
+            linestyle=(0, (5, 4)), zorder=1)
+    ax.annotate(f"boom {boom:.3f} m（+Z 指向 ↑）", (0.0, boom),
+                xytext=(0, 8), textcoords="offset points",
+                ha="center", va="bottom", fontsize=8.5, color="#616161")
+
+    legend_lines: list[object] = []
+    legend_labels: list[str] = []
+    seen_bands: set[str] = set()
+    for row in rows:
+        z = float(row["z"])
+        length = float(row["length"])
+        band = str(row.get("band") or "-")
+        color = palette[band]
+        ax.plot([-length / 2.0, length / 2.0], [z, z], color=color,
+                linewidth=3.2, solid_capstyle="round", zorder=3)
+        if band not in seen_bands:
+            seen_bands.add(band)
+            handle, = ax.plot([], [], color=color, linewidth=3.2)
+            legend_lines.append(handle)
+            legend_labels.append(f"{band} 波段")
+        name = str(row.get("name") or "")
+        ax.annotate(f"{name} · {length:.3f} m", (length / 2.0, z),
+                    xytext=(7, 0), textcoords="offset points",
+                    ha="left", va="center", fontsize=8.2, color=color,
+                    fontweight="bold" if str(row.get("role") or "") == "driven" else "normal")
+        if str(row.get("role") or "") == "driven":
+            ax.plot([0.0], [z], marker="o", markersize=6.2, zorder=5,
+                    markerfacecolor="white", markeredgecolor=color,
+                    markeredgewidth=1.6)
+
+    feed_handle, = ax.plot([], [], marker="o", linestyle="none", markersize=6.2,
+                           markerfacecolor="white", markeredgecolor="#424242",
+                           markeredgewidth=1.6)
+    legend_lines.append(feed_handle)
+    legend_labels.append("馈电点（50 Ω 直接馈电）")
+    ax.legend(legend_lines, legend_labels, loc="upper left", fontsize=8.5,
+              frameon=False)
+
+    dimension_x = -half * 1.16
+    for lower, upper in zip(rows, rows[1:]):
+        z1, z2 = float(lower["z"]), float(upper["z"])
+        ax.annotate("", xy=(dimension_x, z1), xytext=(dimension_x, z2),
+                    arrowprops={"arrowstyle": "<->", "shrinkA": 0, "shrinkB": 0,
+                                "linewidth": 0.8, "color": "#757575"})
+        ax.annotate(f"{z2 - z1:.3f}", (dimension_x, (z1 + z2) / 2.0),
+                    xytext=(-6, 0), textcoords="offset points",
+                    ha="right", va="center", rotation=90, fontsize=7.0,
+                    color="#757575")
+
+    ax.set_title(subtitle or "", fontsize=9.5, color="#616161")
+    fig.suptitle(title or "天线几何示意", fontsize=13)
+
+    table_payload = None
+    if table_ax is not None:
+        table_ax.axis("off")
+        table_rows = []
+        driven_rows: list[int] = []
+        for index, row in enumerate(rows):
+            length = float(row["length"])
+            wavelength_m = row.get("wavelength_m")
+            table_rows.append([
+                str(row.get("name") or ""),
+                str(row.get("band") or ""),
+                _ROLE_LABELS.get(str(row.get("role") or ""), str(row.get("role") or "")),
+                f"{length:.4f}",
+                f"{length / float(wavelength_m):.3f}" if wavelength_m else "-",
+                f"{float(row['z']):.3f}",
+                str(row.get("segments", "-")),
+            ])
+            if str(row.get("role") or "") == "driven":
+                driven_rows.append(index)
+        columns = ["元件", "波段", "角色", "长度 (m)", "长度 (λ)", "z (m)", "段数"]
+        table = table_ax.table(cellText=table_rows, colLabels=columns,
+                               cellLoc="center", loc="center")
+        table.auto_set_font_size(False)
+        table.set_fontsize(8.6)
+        table.scale(1.0, 1.45)
+        for (row_index, _column), cell in table.get_celld().items():
+            if row_index == 0:
+                cell.set_facecolor("#eeeeee")
+                cell.set_text_props(fontweight="bold")
+                continue
+            if row_index - 1 in driven_rows:
+                cell.set_facecolor("#fff8e1")
+                cell.set_text_props(fontweight="bold")
+        table_payload = {"rows": len(table_rows), "columns": columns}
+
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+    return {
+        "path": str(path),
+        "size_bytes": path.stat().st_size,
+        "elements": len(rows),
+        "boom_length_m": round(boom, 4),
+        "bands": bands,
+        "dpi": dpi,
+        "table": table_payload,
+    }
+
