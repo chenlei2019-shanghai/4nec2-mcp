@@ -117,3 +117,95 @@ def test_eval_expr_rejects_unsafe_expressions():
     for expression in ("__import__('os')", "open('x')", "(lambda: 1)()"):
         with pytest.raises(ModelError):
             eval_expr(expression)
+
+# --- Borrowed from docs 33/34 (NEC card-format audit & input-format guide) ---
+
+
+def test_fields_may_be_comma_separated():
+    deck = (
+        "CE\n"
+        "GW 1, 3, 0, -0.25, 0, 0, 0.25, 0, 0.001\n"
+        "GE 0\nGN -1\nEX 0 1 2 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert len(model.wires) == 1
+    assert model.wires[0].radius == pytest.approx(0.001)
+
+
+def test_bang_inline_comment_is_stripped_from_data_cards():
+    deck = (
+        "CE\n"
+        "GW 1 3 0 -0.25 0 0 0.25 0 0.001 ! half-wave dipole\n"
+        "GE 0\nGN -1\nEX 0 1 2 0 1 0 ! feed\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert model.wires[0].length_m == pytest.approx(0.5)
+    assert not [w for w in model.warnings if "GW card needs" in w]
+
+
+def test_gw_without_radius_defaults_to_zero_for_gc_taper():
+    deck = (
+        "CE\n"
+        "GW 1 5 0 -0.25 0 0 0.25 0\n"
+        "GC 0 0 0.01 0.01 0.02\n"
+        "GE 0\nGN -1\nEX 0 1 3 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert len(model.wires) == 1
+    assert model.wires[0].radius == 0.0
+
+
+def test_gw_with_zero_segments_is_skipped():
+    deck = (
+        "CE\n"
+        "GW 1 0 0 -0.25 0 0 0.25 0 0.001\n"
+        "GW 2 3 0.5 -0.25 0 0.5 0.25 0 0.001\n"
+        "GE 0\nGN -1\nEX 0 2 2 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert [w.tag for w in model.wires] == [2]
+
+
+def test_gs_scales_coordinates_and_radius():
+    deck = (
+        "CE\n"
+        "GW 1 3 0 -0.25 0 0 0.25 0 0.001\n"
+        "GS 0 0 2\n"
+        "GE 0\nGN -1\nEX 0 1 2 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert model.wires[0].length_m == pytest.approx(1.0)
+    assert model.wires[0].radius == pytest.approx(0.002)
+
+
+def test_gs_accepts_bare_unit_words():
+    deck = (
+        "CE\n"
+        "GW 1 3 0 -0.5 0 0 0.5 0 0.01\n"
+        "GS 0 0 ft\n"
+        "GE 0\nGN -1\nEX 0 1 2 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert model.wires[0].length_m == pytest.approx(0.3048)
+
+
+def test_replication_cards_warn_instead_of_confusing_describe():
+    deck = (
+        "CE\n"
+        "GW 1 3 0 -0.25 0 0 0.25 0 0.001\n"
+        "GX 0 110\n"
+        "GE 0\nGN -1\nEX 0 1 2 0 1 0\nFR 0 0 0 0 300 0\nEN\n"
+    )
+    model = parse_deck(deck)
+    assert any("GX replication card" in w for w in model.warnings)
+
+
+def test_eval_expr_implicit_multiplication():
+    assert eval_expr("0.5D1", {"D1": 4.0}) == pytest.approx(2.0)
+    assert eval_expr("2Lr", {"Lr": 0.322}) == pytest.approx(0.644)
+
+
+def test_eval_expr_scientific_notation_not_split():
+    assert eval_expr("1E3") == pytest.approx(1000.0)
+    assert eval_expr("2.5e-2") == pytest.approx(0.025)
+    assert eval_expr("1E3X", {"X": 2.0}) == pytest.approx(2000.0)

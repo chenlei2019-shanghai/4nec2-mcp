@@ -535,6 +535,9 @@ SWR≤2 带宽 484–487 MHz（3 MHz）。
 | `nec_build_yagi` 报 `invalid Yagi design` | 单元太长/太短或间距越界（`validate()` 要求相邻间距 0.05–0.5 λ、单元长度 0.1–0.6 λ）；默认 8 元已按 0.2 λ 间距生成，给显式 `boom_length_m`（如 0.6）或减少单元数仍报错时，说明 `element_lengths_m` / `element_positions_m` 传了越界值 |
 | 返回 `blocks: []` / 增益全为 `null`（原始输出为空） | 引擎实际没跑起来：多因引擎路径错、deck 缺 `EN` 卡或输出被写到了不可写目录。给 `nec_run(..., save_out_path="xxx.out")` 保留原始输出，先看文件里有没有 `FREQUENCY=` 段 |
 | 引擎报 `UNCORRECT LABEL` | deck 里有 NEC-2 不认识的卡片标签或卡片顺序错（`CM`/`CE` 注释卡要在 `EN` 之前，`CE` 之后不应再有几何卡）。用 `nec_describe` 看解析出的卡片与 `warnings`，或先用 `nec_run(deck=...)` 跑最小 deck 定位 |
+| 引擎报 `GEOMETRY DATA CARD ERROR` | 几何卡字段解析失败：常见原因是 GW 行超过 NEC-2 的 80 列卡片上限（半径字段被截断为 0）——`nec_run` 会自动紧凑重排纯数字卡；也可能是坐标里混入了无法求值的符号 |
+| 引擎报 `NO SEGMENT HAS AN EXCITATION` | `EX` 卡的 tag/段号指向不存在的导线段（GW 的 NS=0 会让整根导线消失）；用 `nec_describe` 核对实际生成的 tag 与段数 |
+| 引擎报 `FAULT IN DATA CARD NO. n` | 第 n 张数据卡字段数或数值非法；该卡号按几何卡之后的数据卡计数（`***** DATA CARD NO. n` 在输出文件里可对照） |
 | 出图工具一直不返回 / 客户端超时 | 多半是首批 numpy/matplotlib 导入被放进了 anyio 工作线程（Windows 加载器锁死锁）。确认没有设 `NEC_PLOTS_PRELOAD=0`、没加 `--no-plots`，且 server 是 2.1.0 以上 |
 | 出图报 `plotting needs matplotlib` | 装依赖：`.\.venv\Scripts\python.exe -m pip install "matplotlib>=3.8"`，然后重启 server 进程 |
 | 3-D 图报「需要完整球面网格」 | `RP` 卡要同时给 NTH>1 与 NPH>1；用 `nec_plot_pattern(include_3d=true)` 会自动替换成球面网格，手写 `deck=` 时需自己写 `RP 0 37 73 1000 0 0 5 5` |

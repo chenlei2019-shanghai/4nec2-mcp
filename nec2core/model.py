@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 _LABELS = {
     "CM", "CE", "CT", "CK", "GW", "GE", "GN", "EX", "FR", "RP", "LD", "TL",
     "SY", "EK", "EN", "NH", "GC", "GM", "SP", "SM", "SC", "GA", "IS", "PT", "XQ",
-    "NX", "NE", "EK",
+    "NX", "NE", "GS", "GX", "GR",
 }
 
 
@@ -80,6 +80,7 @@ class Model:
     comment: str = ""
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    gs_scales: list[float] = field(default_factory=list)
 
     @property
     def total_segments(self) -> int:
@@ -125,6 +126,21 @@ _ALLOWED_NODES = (
 
 _SYMBOL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\b")
 
+# Implicit multiplication: ``0.5D1`` means ``0.5*D1`` (a number directly
+# followed by an identifier).  The scientific-notation tail (``E±digits``) is
+# consumed greedily first so ``1E3`` or ``2.5E-2X`` are not mis-split.
+_IMPLICIT_MULT_RE = re.compile(r"(?<![\w.])(?>\d+(?:\.\d*)?(?:[Ee][+-]?\d+)?|\.\d+)(?=[A-Za-z_])")
+
+# Bare length units accepted on GS cards (4NEC2 extension), per the NEC input
+# format guide: ``GS 0 0 ft`` scales the whole geometry to metres.
+_UNIT_SCALES = {"ft": 0.3048, "in": 0.0254, "cm": 0.01, "mm": 0.001, "yd": 0.9144}
+
+
+def _strip_inline_comment(text: str) -> str:
+    """Drop a ``!`` inline comment from a data card (comments keep full text)."""
+    bang = text.find("!")
+    return text[:bang] if bang >= 0 else text
+
 
 def eval_expr(expr: str, symbols: dict[str, float] | None = None) -> float:
     """Evaluate a NEC symbol expression (arithmetic + a few functions).
@@ -138,6 +154,9 @@ def eval_expr(expr: str, symbols: dict[str, float] | None = None) -> float:
         raise ModelError("empty expression")
     if text.lower() in {"pi", "p i"}:
         return math.pi
+    # Insert the implicit ``*`` between a number and a following identifier
+    # (``0.5D1`` → ``0.5*D1``); scientific notation stays intact.
+    text = _IMPLICIT_MULT_RE.sub(lambda m: m.group(0) + "*", text)
     try:
         value = float(text)
         return value
@@ -203,7 +222,7 @@ def parse_deck(text: str) -> Model:
         if label not in _LABELS:
             model.warnings.append(f"line {line_no}: unrecognised card label {label!r}")
             continue
-        fields = line[2:].split()
+        fields = _split_data_fields(line[2:])
         model.cards.append(Card(label=label, fields=fields, raw=line, line_no=line_no))
 
         if label == "SY":
@@ -212,6 +231,20 @@ def parse_deck(text: str) -> Model:
             wire = _parse_gw(fields, model.symbols, line_no, model)
             if wire:
                 model.wires.append(wire)
+        elif label == "GS":
+            _parse_gs(fields, model, line_no)
+        elif label in ("GX", "GM", "GR"):
+            _warn_once(
+                model, label,
+                f"line {line_no}: {label} replication card — describe shows the base "
+                f"geometry only; the engine expands it correctly",
+            )
+        elif label == "NX":
+            _warn_once(
+                model, label,
+                f"line {line_no}: NX card — deck holds multiple data sets; only the "
+                f"first is described/simulated",
+            )
         elif label == "FR":
             _parse_fr(fields, model, line_no)
         elif label == "GN":
@@ -225,6 +258,7 @@ def parse_deck(text: str) -> Model:
         elif label == "EN":
             break
 
+    _apply_gs_scales(model)
     model.comment = " ".join(c for c in comments if c)
     if not model.wires:
         model.errors.append("deck contains no GW (wire) cards")
@@ -233,6 +267,21 @@ def parse_deck(text: str) -> Model:
     if not model.frequencies_mhz:
         model.errors.append("deck contains no FR (frequency) card")
     return model
+
+
+def _split_data_fields(text: str) -> list[str]:
+    """Tokenise the data portion of a card.
+
+    NEC accepts both spaces and commas as separators, and ``!`` starts an
+    inline comment (see the NEC input-format guide).
+    """
+    return _strip_inline_comment(text).replace(",", " ").split()
+
+
+def _warn_once(model: Model, key: str, message: str) -> None:
+    if any(key in w for w in model.warnings):
+        return
+    model.warnings.append(message)
 
 
 def _parse_sy(fields: list[str], model: Model, line_no: int) -> None:
@@ -261,6 +310,11 @@ def _number(token: str, symbols: dict[str, float], line_no: int, model: Model, f
 
 
 def _parse_gw(fields: list[str], symbols: dict[str, float], line_no: int, model: Model) -> Wire | None:
+    if len(fields) == 8:
+        # Radius omitted → RAD defaults to 0 and a GC taper card is expected
+        # to follow (NEC-2 rules).  The engine resolves the taper; describe
+        # shows the untapered wire.
+        fields = fields + ["0"]
     if len(fields) < 9:
         model.warnings.append(f"line {line_no}: GW card needs 9 fields, got {len(fields)}")
         return None
@@ -271,13 +325,45 @@ def _parse_gw(fields: list[str], symbols: dict[str, float], line_no: int, model:
         if value is None:
             return None
         values.append(value)
+    nseg = int(round(values[1]))
+    if nseg == 0:
+        # NS=0 deliberately disables the wire (used for optional elements).
+        return None
     return Wire(
         tag=int(round(values[0])),
-        segments=max(1, int(round(values[1]))),
+        segments=max(1, nseg),
         x1=values[2], y1=values[3], z1=values[4],
         x2=values[5], y2=values[6], z2=values[7],
         radius=values[8], line_no=line_no,
     )
+
+
+def _parse_gs(fields: list[str], model: Model, line_no: int) -> None:
+    if len(fields) < 3:
+        model.warnings.append(f"line {line_no}: GS card needs a scale field")
+        return
+    token = fields[2]
+    unit = token.strip().lower()
+    if unit in _UNIT_SCALES:
+        model.gs_scales.append(_UNIT_SCALES[unit])
+        return
+    value = _number(token, model.symbols, line_no, model, "GS scale")
+    if value is not None:
+        model.gs_scales.append(value)
+
+
+def _apply_gs_scales(model: Model) -> None:
+    if not model.gs_scales:
+        return
+    if len(model.gs_scales) > 1:
+        model.warnings.append("multiple GS cards; scales applied cumulatively")
+    factor = 1.0
+    for f in model.gs_scales:
+        factor *= f
+    for wire in model.wires:
+        wire.x1 *= factor; wire.y1 *= factor; wire.z1 *= factor
+        wire.x2 *= factor; wire.y2 *= factor; wire.z2 *= factor
+        wire.radius *= factor
 
 
 def _parse_fr(fields: list[str], model: Model, line_no: int) -> None:
