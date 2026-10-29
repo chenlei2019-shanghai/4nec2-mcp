@@ -72,28 +72,34 @@ def test_sanitize_deck_does_not_duplicate_en():
     deck = "CM comment\nGW 1 1 0 0 0 0 1 0 0.001\nEN\n"
     sanitized = sanitize_deck(deck)
     assert sum(1 for line in sanitized.splitlines() if line[:2].upper() == "EN") == 1
-    assert "CM comment" in sanitized
+    # The single comment line is normalised to the CE terminator.
+    assert sanitized.splitlines()[0] == "CE comment"
 
 
 def test_sanitize_deck_replaces_non_ascii_on_comment_cards():
     sanitized = sanitize_deck("CM 中文注释\nEN\n")
     assert "中文" not in sanitized
-    assert sanitized.startswith("CM ??")
+    assert sanitized.startswith("CE ??")
 
 
 def test_sanitize_deck_inserts_ce_after_dangling_cm():
     """G0KSC library decks have CM cards but no CE — the engine then reads the
-    first geometry card as a comment and dies with INCORRECT LABEL."""
+    first geometry card as a comment and dies with INCORRECT LABEL.  The last
+    comment line is therefore normalised into the CE terminator."""
     deck = "CM no terminator\nGW 1 1 0 0 0 0 1 0 0.001\nEN\n"
     sanitized = sanitize_deck(deck)
     lines = [ln for ln in sanitized.splitlines() if ln.strip()]
-    assert lines[:3] == ["CM no terminator", "CE", "GW 1 1 0 0 0 0 1 0 0.001"]
+    assert lines[:2] == ["CE no terminator", "GW 1 1 0 0 0 0 1 0 0.001"]
 
 
-def test_sanitize_deck_does_not_insert_ce_when_ct_present():
+def test_sanitize_deck_demotes_ct_because_engines_reject_it():
+    """CT/CK are 4NEC2-GUI extensions; the engine aborts on them with
+    INCORRECT LABEL FOR A COMMENT CARD, so they become plain comments."""
     deck = "CM comment\nCT\nGW 1 1 0 0 0 0 1 0 0.001\nEN\n"
     sanitized = sanitize_deck(deck)
-    assert sum(1 for ln in sanitized.splitlines() if ln.strip() == "CE") == 0
+    lines = [ln for ln in sanitized.splitlines() if ln.strip()]
+    assert not any(ln[:2].upper() in ("CT", "CK") for ln in lines)
+    assert sum(1 for ln in lines if ln[:2].upper() == "CE") == 1
 
 
 def test_sanitize_deck_compacts_overlong_numeric_cards():
@@ -104,7 +110,8 @@ def test_sanitize_deck_compacts_overlong_numeric_cards():
         "    3.546000    0.000000  0.00635000\nEN\n"
     )
     sanitized = sanitize_deck(deck)
-    gw = sanitized.splitlines()[0]
+    # A deck without any comment card gets a bare CE prepended (line 0).
+    gw = sanitized.splitlines()[1]
     assert len(gw) <= 80
     assert gw == "GW 1 20 0 -3.546 0 0 3.546 0 0.00635"
 
@@ -113,7 +120,7 @@ def test_sanitize_deck_leaves_overlong_symbolic_cards_alone():
     card = "GW 1 20 Xr -Hr Zel Xr Hr Zel Rwire " + "0.000000 " * 8
     sanitized = sanitize_deck(card + "\nEN\n")
     lines = [ln for ln in sanitized.splitlines() if ln.strip()]
-    assert lines == [card.rstrip(), "EN"]
+    assert lines == ["CE", card.rstrip(), "EN"]
 
 
 def test_engine_rejects_unknown_engine_name(nec4nec_dir):
@@ -145,3 +152,24 @@ def test_gn2_without_rp_reports_clear_error(engine):
     result = engine.run(deck)
     assert not result.ok
     assert any("stopped without producing a solution" in e for e in result.errors)
+
+
+def test_sanitize_deck_demotes_duplicate_ce_to_cm(engine):
+    """A second CE card is parsed by the engines as a data card and kills the
+    run; sanitize_deck must demote it to CM (deck then runs clean)."""
+    deck = (
+        "CE first comment\n"
+        "CE second comment\n"
+        "GW 1 11 0 -5 12 0 5 12 0.0008\n"
+        "GE 0\n"
+        "GN 2 0 0 0 13 0.005\n"
+        "EX 0 1 6 0 1 0\n"
+        "FR 0 0 0 0 7.1 0\n"
+        "RP 0 19 37 1000 90 0 -10 10\n"
+        "EN\n"
+    )
+    sanitized = sanitize_deck(deck)
+    assert sanitized.splitlines()[0].startswith("CM")
+    assert sanitized.splitlines()[1].startswith("CE")
+    result = engine.run(deck)
+    assert result.ok, result.errors

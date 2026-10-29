@@ -539,6 +539,7 @@ SWR≤2 带宽 484–487 MHz（3 MHz）。
 | 引擎报 `NO SEGMENT HAS AN EXCITATION` | `EX` 卡的 tag/段号指向不存在的导线段（GW 的 NS=0 会让整根导线消失）；用 `nec_describe` 核对实际生成的 tag 与段数 |
 | 引擎报 `FAULT IN DATA CARD NO. n` | 第 n 张数据卡字段数或数值非法；该卡号按几何卡之后的数据卡计数（`***** DATA CARD NO. n` 在输出文件里可对照） |
 | GN 2（Sommerfeld 地面）运行后无解、报 `engine stopped without producing a solution` | NEC2/MP 合并版 som2d 的已知行为：deck 里没有 RP 卡时会无声停在卡片清单处。给 deck 加一张 RP 卡（哪怕只要阻抗）即可；另外 GN 2 的第二字段（径向地网线数）必须为 0，否则报 `RADIAL WIRE G. S. APPROXIMATION MAY NOT BE USED WITH SOMMERFELD GROUND OPTION` |
+| 引擎报 `CARD ERROR - INVALID NUMBER AT INTEGER POSITION 1` 或 `TOO MANY FIELDS IN RECORD`，但卡片看起来没错 | 注释卡规则：引擎只接受**文件开头**的注释块，且必须是 `CM…CM…CE`（CE 是注释块的**结束卡**，只能用一次）；第二张 CE、CE 后面的 CM、数据卡中间的任何注释卡都会被当成数据卡解析。CT/CK 是 4NEC2 GUI 扩展，引擎同样不认。`sanitize_deck` 会自动修复（多余的 CE/CT/CK 降为 CM、中间注释移到顶部、最后一张注释作为 CE），手写 deck 时注意此规则 |
 | 近地/地面方向图增益全为 -999.99 | 这是物理结果不是解析失败：水平振子在接地面上方时，θ=90°（地平线）处的空间波增益本来就趋于零。RP 卡要覆盖仰角范围（如 `RP 0 10 37 1000 90 0 -10 10`）才有非零样本 |
 | 出图工具一直不返回 / 客户端超时 | 多半是首批 numpy/matplotlib 导入被放进了 anyio 工作线程（Windows 加载器锁死锁）。确认没有设 `NEC_PLOTS_PRELOAD=0`、没加 `--no-plots`，且 server 是 2.1.0 以上 |
 | 出图报 `plotting needs matplotlib` | 装依赖：`.\.venv\Scripts\python.exe -m pip install "matplotlib>=3.8"`，然后重启 server 进程 |

@@ -171,35 +171,61 @@ def sanitize_deck(text: str) -> str:
 
     Non-ASCII characters are only stripped on comment cards (CM/CE/CT/CK);
     everything else is preserved, including any numeric symbols and comments.
-    A trailing EN card is appended when missing.  When CM comment cards are
-    present but no CE terminates the comment section (the whole G0KSC model
-    library is written that way), a CE card is inserted after the last CM —
-    otherwise the engine reads the first geometry card as a comment and dies
-    with "INCORRECT LABEL FOR A COMMENT CARD".  Data cards longer than the
+    A trailing EN card is appended when missing.  Data cards longer than the
     80-column card limit (the G0KSC library writes 95-char GW lines whose
     radius starts at column 86) are re-tokenized compactly — otherwise the
     engine truncates the line, reads a zero radius and dies with
     "GEOMETRY DATA CARD ERROR".
+
+    Comment handling (verified against the bundled NEC2/MP engine):
+    the engines only accept comment cards at the very top of the deck, as
+    ``CM`` lines terminated by exactly ONE ``CE``.  A second CE, a CE before
+    a CM, or any comment card between data cards is parsed as a data card and
+    kills the run ("CARD ERROR - INVALID NUMBER AT INTEGER POSITION 1" /
+    "TOO MANY FIELDS IN RECORD"), a deck with no comment card at all dies
+    with "INCORRECT LABEL FOR A COMMENT CARD", and the 4NEC2-specific CT/CK
+    cards are not accepted by the engine at all.  sanitize_deck therefore
+    rebuilds the comment block: CT/CK become CM, surplus CEs become CM,
+    mid-deck comment cards are relocated into the top block, the last comment
+    line is emitted as CE, and a bare CE is prepended when the deck has no
+    comment card.  (The whole G0KSC model library ships CM cards with no CE
+    and needs exactly this repair.)
     """
     text = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines: list[str] = []
+    cleaned: list[str] = []
     for line in text.split("\n"):
         label = line[:2].upper()
-        if label in COMMENT_LABELS:
-            line = "".join(ch if ord(ch) < 128 else "?" for ch in line)
-        elif any(ord(ch) > 127 for ch in line):
-            # Defensive: keep data cards ANSI as well; engines abort otherwise.
+        if label in COMMENT_LABELS or any(ord(ch) > 127 for ch in line):
+            # Defensive: keep every card ANSI; engines abort on non-ASCII.
             line = "".join(ch if ord(ch) < 128 else "?" for ch in line)
         line = line.rstrip()
         if len(line) > 80 and label not in COMMENT_LABELS:
             line = _compact_card(line)
-        lines.append(line)
-    meaningful = [ln for ln in lines if ln.strip()]
-    has_cm = any(ln[:2].upper() == "CM" for ln in meaningful)
-    has_ce = any(ln[:2].upper() in ("CE", "CT", "CK") for ln in meaningful)
-    if has_cm and not has_ce:
-        last_cm = max(i for i, ln in enumerate(lines) if ln.strip()[:2].upper() == "CM")
-        lines.insert(last_cm + 1, "CE")
+        cleaned.append(line)
+
+    comments: list[str] = []
+    body: list[str] = []
+    head = True
+    for line in cleaned:
+        label = line[:2].upper()
+        if head and label in COMMENT_LABELS:
+            comments.append(line)
+            continue
+        if line.strip():
+            head = False
+        if label in COMMENT_LABELS and line.strip():
+            # Relocate a mid-deck comment card into the top block (as CM).
+            comments.append(line if label == "CM" else "CM" + line[2:])
+        else:
+            body.append(line)
+    if comments:
+        # CE is a terminator, not a repeatable card: exactly one, at the end.
+        norm = [c if c[:2].upper() == "CM" else "CM" + c[2:] for c in comments]
+        norm[-1] = "CE" + norm[-1][2:]
+        comments = norm
+    else:
+        comments = ["CE"]
+    lines = comments + body
     if not any(ln[:2].upper() == "EN" for ln in lines if ln.strip()):
         lines.append("EN")
     return "\n".join(lines) + "\n"
