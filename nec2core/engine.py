@@ -305,6 +305,18 @@ class NecEngine:
         msg_errors, msg_warnings = _scan_messages(output)
         errors.extend(msg_errors)
         warnings.extend(msg_warnings)
+        if (
+            exit_code == 0
+            and not errors
+            and "FREQUENCY=" not in output
+            and ("RUN TIME" in output or "DATA CARD" in output)
+        ):
+            # The engine parsed every card and then stopped without solving —
+            # observed with GN 2 (Sommerfeld) decks that carry no RP card.
+            errors.append(
+                "engine stopped without producing a solution (output ends after "
+                "the data-card listing; with GN 2 Sommerfeld ground, add an RP card)"
+            )
         duration = time.perf_counter() - started
         ok = exit_code == 0 and not errors and "FREQUENCY=" in output
         return RunResult(

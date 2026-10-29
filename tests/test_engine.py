@@ -128,3 +128,20 @@ def test_custom_engine_selection(nec4nec_dir, yagi_nec_text):
     assert Path(engine.engine_path).name.lower() == "nec2dxs11k.exe"
     result = engine.run(yagi_nec_text, timeout_s=30)
     assert result.ok is True, result.errors
+
+
+def test_gn2_without_rp_reports_clear_error(engine):
+    """GN 2 (Sommerfeld) decks without an RP card make the merged som2d
+    engine stop silently after the card listing; surface that as an error."""
+    deck = (
+        "CE gn2 no rp\n"
+        "GW 1 11 0 -5 6 0 5 6 0.001\n"
+        "GE 0\n"
+        "GN 2 0 0 0 13 0.005\n"
+        "EX 0 1 6 0 1 0\n"
+        "FR 0 0 0 0 7.1 0\n"
+        "EN\n"
+    )
+    result = engine.run(deck)
+    assert not result.ok
+    assert any("stopped without producing a solution" in e for e in result.errors)

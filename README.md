@@ -538,6 +538,8 @@ SWR≤2 带宽 484–487 MHz（3 MHz）。
 | 引擎报 `GEOMETRY DATA CARD ERROR` | 几何卡字段解析失败：常见原因是 GW 行超过 NEC-2 的 80 列卡片上限（半径字段被截断为 0）——`nec_run` 会自动紧凑重排纯数字卡；也可能是坐标里混入了无法求值的符号 |
 | 引擎报 `NO SEGMENT HAS AN EXCITATION` | `EX` 卡的 tag/段号指向不存在的导线段（GW 的 NS=0 会让整根导线消失）；用 `nec_describe` 核对实际生成的 tag 与段数 |
 | 引擎报 `FAULT IN DATA CARD NO. n` | 第 n 张数据卡字段数或数值非法；该卡号按几何卡之后的数据卡计数（`***** DATA CARD NO. n` 在输出文件里可对照） |
+| GN 2（Sommerfeld 地面）运行后无解、报 `engine stopped without producing a solution` | NEC2/MP 合并版 som2d 的已知行为：deck 里没有 RP 卡时会无声停在卡片清单处。给 deck 加一张 RP 卡（哪怕只要阻抗）即可；另外 GN 2 的第二字段（径向地网线数）必须为 0，否则报 `RADIAL WIRE G. S. APPROXIMATION MAY NOT BE USED WITH SOMMERFELD GROUND OPTION` |
+| 近地/地面方向图增益全为 -999.99 | 这是物理结果不是解析失败：水平振子在接地面上方时，θ=90°（地平线）处的空间波增益本来就趋于零。RP 卡要覆盖仰角范围（如 `RP 0 10 37 1000 90 0 -10 10`）才有非零样本 |
 | 出图工具一直不返回 / 客户端超时 | 多半是首批 numpy/matplotlib 导入被放进了 anyio 工作线程（Windows 加载器锁死锁）。确认没有设 `NEC_PLOTS_PRELOAD=0`、没加 `--no-plots`，且 server 是 2.1.0 以上 |
 | 出图报 `plotting needs matplotlib` | 装依赖：`.\.venv\Scripts\python.exe -m pip install "matplotlib>=3.8"`，然后重启 server 进程 |
 | 3-D 图报「需要完整球面网格」 | `RP` 卡要同时给 NTH>1 与 NPH>1；用 `nec_plot_pattern(include_3d=true)` 会自动替换成球面网格，手写 `deck=` 时需自己写 `RP 0 37 73 1000 0 0 5 5` |
